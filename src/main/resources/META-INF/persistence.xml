@@ -26,11 +26,13 @@
 
         <properties>
             <property name="jakarta.persistence.jdbc.driver" value="com.mysql.cj.jdbc.Driver"/>
-            <property name="jakarta.persistence.jdbc.url" value="jdbc:mysql://bdzifu0qmeo0pjsghxse-mysql.services.clever-cloud.com:3306/bdzifu0qmeo0pjsghxse?useUnicode=true&amp;characterEncoding=UTF-8&amp;serverTimezone=UTC"/>
-            <property name="jakarta.persistence.jdbc.user" value="uamqp4nqzilmzcvs"/>
-            <property name="jakarta.persistence.jdbc.password" value="pHXIMufMemiNvlZKBD5E"/>
 
-            <property name="hibernate.dialect" value="org.hibernate.dialect.MySQL8Dialect"/>
+            <property name="jakarta.persistence.jdbc.url" value="jdbc:mysql://bdzifu0qmeo0pjsghxse-mysql.services.clever-cloud.com:3306/bdzifu0qmeo0pjsghxse?useUnicode=true&amp;characterEncoding=UTF-8&amp;serverTimezone=UTC"/>
+
+            <property name="jakarta.persistence.jdbc.user" value="uamqp4nqzilmzcvs"/>
+            <property name="jakarta.persistence.jdbc.password" value="pHXiMUfMemiNvlZKBD5E"/>
+
+            <property name="hibernate.dialect" value="org.hibernate.dialect.MySQLDialect"/>
             <property name="hibernate.hbm2ddl.auto" value="update"/>
             <property name="hibernate.show_sql" value="true"/>
             <property name="hibernate.format_sql" value="true"/>
