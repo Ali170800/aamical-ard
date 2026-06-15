@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<persistence xmlns="https://jakarta.ee/xml/ns/persistence"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             version="3.0"
+             xsi:schemaLocation="https://jakarta.ee/xml/ns/persistence 
+                                 https://jakarta.ee/xml/ns/persistence/persistence_3_0.xsd">
+
+    <persistence-unit name="amicalePU" transaction-type="RESOURCE_LOCAL">
+        <provider>org.hibernate.jpa.HibernatePersistenceProvider</provider>
+
+        <!-- Liste explicite des entités -->
+        <class>com.amical.ard.entites.Utilisateur</class>
+        <class>com.amical.ard.entites.Bureau</class>
+        <class>com.amical.ard.entites.Reunion</class>
+        <class>com.amical.ard.entites.Activite</class>
+        <class>com.amical.ard.entites.FichierJoint</class>
+        <class>com.amical.ard.entites.Caravane</class>
+        <class>com.amical.ard.entites.Etudiant</class>
+        <class>com.amical.ard.entites.Appartement</class>
+        <class>com.amical.ard.entites.LogementEtudiant</class>
+        <class>com.amical.ard.entites.EmailEtudiant</class>
+        <class>com.amical.ard.entites.EmailProgramme</class>
+        <class>com.amical.ard.entites.CompteRendu</class>
+        <class>com.amical.ard.entites.PaiementLogement</class>
+        <class>com.amical.ard.entites.ParticipantCaravane</class>
+        <class>com.amical.ard.entites.DepenseActivite</class>
+
+        <properties>
+            <!-- Connexion MySQL -->
+            <property name="jakarta.persistence.jdbc.driver" value="com.mysql.cj.jdbc.Driver"/>
+            <property name="jakarta.persistence.jdbc.url" value="jdbc:mysql://localhost:3306/amical_ard?useUnicode=true&amp;characterEncoding=UTF-8&amp;serverTimezone=UTC"/>
+            <property name="jakarta.persistence.jdbc.user" value="root"/>
+            <property name="jakarta.persistence.jdbc.password" value=""/>
+
+            <!-- Hibernate -->
+            <property name="hibernate.dialect" value="org.hibernate.dialect.MySQL8Dialect"/>
+            <property name="hibernate.hbm2ddl.auto" value="update"/>
+            <property name="hibernate.show_sql" value="true"/>
+            <property name="hibernate.format_sql" value="true"/>
+
+            <!-- Amélioration performance -->
+            <property name="hibernate.archive.autodetection" value="class"/>
+        </properties>
+    </persistence-unit>
+</persistence>
