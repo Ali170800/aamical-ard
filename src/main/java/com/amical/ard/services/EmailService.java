@@ -12,8 +12,9 @@ import java.util.Properties;
 
 public class EmailService {
 
-    private final String fromEmail = "amicalediourbel77@gmail.com"; // NE PAS MODIFIER
-    private final String password = "amrn yjbb jkzk zsvt";           // NE PAS MODIFIER
+    // Récupération des variables depuis Render (Environment Variables)
+    private final String fromEmail = System.getenv("MAIL_USER");
+    private final String password = System.getenv("MAIL_PASSWORD");
     private Session session;
 
     public EmailService() {
@@ -22,10 +23,15 @@ public class EmailService {
         mailProperties.put("mail.smtp.starttls.enable", "true");
         mailProperties.put("mail.smtp.host", "smtp.gmail.com");
         mailProperties.put("mail.smtp.port", "587");
-        mailProperties.put("mail.smtp.ssl.trust", "smtp.gmail.com");
-
+// Ajoute ces deux lignes de timeout
+        mailProperties.put("mail.smtp.connectiontimeout", "10000"); // 10 secondes
+        mailProperties.put("mail.smtp.timeout", "10000");           // 10 secondes
         session = Session.getInstance(mailProperties, new Authenticator() {
+            @Override
             protected PasswordAuthentication getPasswordAuthentication() {
+                if (fromEmail == null || password == null) {
+                    throw new RuntimeException("Variables d'environnement MAIL_USER ou MAIL_PASSWORD non définies !");
+                }
                 return new PasswordAuthentication(fromEmail, password);
             }
         });
@@ -42,7 +48,7 @@ public class EmailService {
             Transport.send(message);
             System.out.println("✅ E-mail envoyé avec succès à : " + destinataire);
         } catch (MessagingException e) {
-            System.err.println("❌ Erreur lors de l’envoi de l’e-mail.");
+            System.err.println("❌ Erreur lors de l’envoi de l’e-mail vers : " + destinataire);
             e.printStackTrace();
         }
     }
