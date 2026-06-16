@@ -1,52 +1,56 @@
 package com.amical.ard.utils;
 
-import jakarta.mail.*;
-import jakarta.mail.internet.InternetAddress;
-import jakarta.mail.internet.MimeMessage;
-
-import java.util.Properties;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 
 public class EmailUtil {
 
-    private static final String EMAIL_FROM = System.getenv("MAIL_USER");
-    private static final String PASSWORD = System.getenv("MAIL_PASSWORD");
+    private static final String API_KEY = System.getenv("BREVO_API_KEY");
+    private static final String SENDER = System.getenv("BREVO_SENDER");
 
-    public static void envoyerEmail(String destinataire, String sujet, String corps) {
-
-        Properties props = new Properties();
-
-        props.put("mail.smtp.host", "smtp.gmail.com");
-        props.put("mail.smtp.port", "465");
-        props.put("mail.smtp.auth", "true");
-
-        props.put("mail.smtp.socketFactory.port", "465");
-        props.put("mail.smtp.socketFactory.class", "javax.net.ssl.SSLSocketFactory");
-        props.put("mail.smtp.socketFactory.fallback", "false");
-
-        props.put("mail.smtp.connectiontimeout", "10000");
-        props.put("mail.smtp.timeout", "10000");
-
-        Session session = Session.getInstance(props, new Authenticator() {
-            @Override
-            protected PasswordAuthentication getPasswordAuthentication() {
-                if (EMAIL_FROM == null || PASSWORD == null) {
-                    throw new RuntimeException("MAIL_USER ou MAIL_PASSWORD non définis !");
-                }
-                return new PasswordAuthentication(EMAIL_FROM, PASSWORD);
-            }
-        });
+    public static void envoyerEmail(String destinataire, String sujet, String message) {
 
         try {
-            Message message = new MimeMessage(session);
-            message.setFrom(new InternetAddress(EMAIL_FROM));
-            message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(destinataire));
-            message.setSubject(sujet);
-            message.setText(corps);
+            String json = """
+            {
+              "sender": {
+                "email": "%s"
+              },
+              "to": [
+                {
+                  "email": "%s"
+                }
+              ],
+              "subject": "%s",
+              "htmlContent": "%s"
+            }
+            """.formatted(
+                    SENDER,
+                    destinataire,
+                    sujet,
+                    message.replace("\n", "<br>")
+            );
 
-            Transport.send(message);
-            System.out.println("✅ Email envoyé à : " + destinataire);
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create("https://api.brevo.com/v3/smtp/email"))
+                    .header("accept", "application/json")
+                    .header("api-key", API_KEY)
+                    .header("content-type", "application/json")
+                    .POST(HttpRequest.BodyPublishers.ofString(json))
+                    .build();
 
-        } catch (MessagingException e) {
+            HttpClient client = HttpClient.newHttpClient();
+
+            HttpResponse<String> response = client.send(
+                    request,
+                    HttpResponse.BodyHandlers.ofString()
+            );
+
+            System.out.println("📩 Réponse Brevo : " + response.body());
+
+        } catch (Exception e) {
             System.err.println("❌ Erreur envoi email : " + e.getMessage());
             e.printStackTrace();
         }
