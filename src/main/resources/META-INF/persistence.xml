@@ -2,20 +2,12 @@
 <persistence xmlns="https://jakarta.ee/xml/ns/persistence"
              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
              version="3.0"
-<<<<<<< HEAD
-             xsi:schemaLocation="https://jakarta.ee/xml/ns/persistence 
-=======
              xsi:schemaLocation="https://jakarta.ee/xml/ns/persistence
->>>>>>> cc8371319608e422e08ccbcba184f02a94198195
                                  https://jakarta.ee/xml/ns/persistence/persistence_3_0.xsd">
 
     <persistence-unit name="amicalePU" transaction-type="RESOURCE_LOCAL">
         <provider>org.hibernate.jpa.HibernatePersistenceProvider</provider>
 
-<<<<<<< HEAD
-        <!-- Liste explicite des entités -->
-=======
->>>>>>> cc8371319608e422e08ccbcba184f02a94198195
         <class>com.amical.ard.entites.Utilisateur</class>
         <class>com.amical.ard.entites.Bureau</class>
         <class>com.amical.ard.entites.Reunion</class>
@@ -33,34 +25,35 @@
         <class>com.amical.ard.entites.DepenseActivite</class>
 
         <properties>
-<<<<<<< HEAD
-            <!-- Connexion MySQL -->
-            <property name="jakarta.persistence.jdbc.driver" value="com.mysql.cj.jdbc.Driver"/>
-            <property name="jakarta.persistence.jdbc.url" value="jdbc:mysql://localhost:3306/amical_ard?useUnicode=true&amp;characterEncoding=UTF-8&amp;serverTimezone=UTC"/>
-            <property name="jakarta.persistence.jdbc.user" value="root"/>
-            <property name="jakarta.persistence.jdbc.password" value=""/>
 
-            <!-- Hibernate -->
-            <property name="hibernate.dialect" value="org.hibernate.dialect.MySQL8Dialect"/>
-=======
-            <property name="jakarta.persistence.jdbc.driver" value="com.mysql.cj.jdbc.Driver"/>
+            <property name="jakarta.persistence.jdbc.driver"
+                      value="com.mysql.cj.jdbc.Driver"/>
 
-            <property name="jakarta.persistence.jdbc.url" value="jdbc:mysql://bdzifu0qmeo0pjsghxse-mysql.services.clever-cloud.com:3306/bdzifu0qmeo0pjsghxse?useUnicode=true&amp;characterEncoding=UTF-8&amp;serverTimezone=UTC"/>
+            <property name="jakarta.persistence.jdbc.url"
+                      value="jdbc:mysql://bdzifu0qmeo0pjsghxse-mysql.services.clever-cloud.com:3306/bdzifu0qmeo0pjsghxse?useUnicode=true&amp;characterEncoding=UTF-8&amp;serverTimezone=UTC"/>
 
-            <property name="jakarta.persistence.jdbc.user" value="uamqp4nqzilmzcvs"/>
-            <property name="jakarta.persistence.jdbc.password" value="pHXiMUfMemiNvlZKBD5E"/>
+            <property name="jakarta.persistence.jdbc.user"
+                      value="uamqp4nqzilmzcvs"/>
 
-            <property name="hibernate.dialect" value="org.hibernate.dialect.MySQLDialect"/>
->>>>>>> cc8371319608e422e08ccbcba184f02a94198195
-            <property name="hibernate.hbm2ddl.auto" value="update"/>
-            <property name="hibernate.show_sql" value="true"/>
-            <property name="hibernate.format_sql" value="true"/>
+            <property name="jakarta.persistence.jdbc.password"
+                      value="pHXiMUfMemiNvlZKBD5E"/>
 
-<<<<<<< HEAD
-            <!-- Amélioration performance -->
-=======
->>>>>>> cc8371319608e422e08ccbcba184f02a94198195
-            <property name="hibernate.archive.autodetection" value="class"/>
+            <property name="hibernate.dialect"
+                      value="org.hibernate.dialect.MySQLDialect"/>
+
+            <property name="hibernate.hbm2ddl.auto"
+                      value="update"/>
+
+            <property name="hibernate.show_sql"
+                      value="true"/>
+
+            <property name="hibernate.format_sql"
+                      value="true"/>
+
+            <property name="hibernate.archive.autodetection"
+                      value="class"/>
+
         </properties>
     </persistence-unit>
+
 </persistence>
