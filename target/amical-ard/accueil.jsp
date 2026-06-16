@@ -1,0 +1,86 @@
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<html>
+<head>
+    <title>Bienvenue - Amicale AERD</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+        }
+        .card {
+            transition: all 0.4s ease;
+        }
+        .card:hover {
+            transform: translateY(-12px);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-6">
+
+    <div class="max-w-5xl w-full">
+        <!-- Header -->
+        <div class="text-center mb-12">
+            <div class="inline-flex items-center gap-3 bg-white/20 backdrop-blur-md px-6 py-3 rounded-3xl mb-6">
+                <i class="fas fa-graduation-cap text-4xl text-white"></i>
+                <h1 class="text-5xl font-bold text-white tracking-tight">Amicale AERD</h1>
+            </div>
+            <p class="text-white/90 text-xl">Amicale des Étudiants Ressortissants de Diourbel</p>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+
+            <!-- ==================== CARD ADMINISTRATEUR ==================== -->
+            <a href="${pageContext.request.contextPath}/login.jsp"
+               class="card group bg-white rounded-3xl overflow-hidden shadow-xl flex flex-col h-full">
+                <div class="h-2 bg-indigo-600"></div>
+                <div class="p-10 flex-1 flex flex-col items-center text-center">
+                    <div class="w-20 h-20 bg-indigo-100 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition">
+                        <i class="fas fa-user-shield text-4xl text-indigo-600"></i>
+                    </div>
+                    <h2 class="text-3xl font-bold text-gray-800 mb-3">Administrateur</h2>
+                    <p class="text-gray-600 mb-8 leading-relaxed">
+                        Accédez à l'espace de gestion complète :<br>
+                        <span class="font-medium">Étudiants, Logements, Paiements, Caravanes, Bureau...</span>
+                    </p>
+                    <div class="mt-auto">
+                        <button class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-10 py-4 rounded-2xl flex items-center gap-3 transition">
+                            <span>Accéder à l'espace Admin</span>
+                            <i class="fas fa-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </a>
+
+            <!-- ==================== CARD ÉTUDIANT ==================== -->
+            <a href="${pageContext.request.contextPath}/pages/connexionEtudiant.jsp"
+               class="card group bg-white rounded-3xl overflow-hidden shadow-xl flex flex-col h-full">
+                <div class="h-2 bg-teal-600"></div>
+                <div class="p-10 flex-1 flex flex-col items-center text-center">
+                    <div class="w-20 h-20 bg-teal-100 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition">
+                        <i class="fas fa-user-graduate text-4xl text-teal-600"></i>
+                    </div>
+                    <h2 class="text-3xl font-bold text-gray-800 mb-3">Étudiant</h2>
+                    <p class="text-gray-600 mb-8 leading-relaxed">
+                        Inscrivez-vous aux caravanes, consultez vos paiements,<br>
+                        gérez votre logement et recevez vos reçus.
+                    </p>
+                    <div class="mt-auto">
+                        <button class="bg-teal-600 hover:bg-teal-700 text-white font-semibold px-10 py-4 rounded-2xl flex items-center gap-3 transition">
+                            <span>Accéder à l'espace Étudiant</span>
+                            <i class="fas fa-arrow-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </a>
+
+        </div>
+
+        <div class="text-center mt-12 text-white/70 text-sm">
+            © 2026 Amicale des Étudiants et Anciens de l'Université - AERD
+        </div>
+    </div>
+
+</body>
+</html>
