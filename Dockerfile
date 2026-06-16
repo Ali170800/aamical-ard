@@ -1,7 +1,8 @@
 FROM maven:3.8.5-openjdk-17 AS build
 WORKDIR /app
 COPY . .
-RUN mvn clean package -DskipTests
+# Ajout de l'option -e pour voir le détail de l'erreur Maven
+RUN mvn -e clean package -DskipTests
 
 FROM tomcat:10-jdk17-openjdk-slim
 RUN rm -rf /usr/local/tomcat/webapps/*
