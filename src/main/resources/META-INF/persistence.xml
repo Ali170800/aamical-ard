@@ -54,6 +54,15 @@
                       value="class"/>
 
         </properties>
+        <properties>
+            <property name="hibernate.hikari.maximumPoolSize" value="3"/>
+            <property name="hibernate.hikari.minimumIdle" value="1"/>
+            <property name="hibernate.hikari.idleTimeout" value="30000"/>
+            <property name="hibernate.hikari.connectionTimeout" value="20000"/>
+
+            <property name="hibernate.connection.provider_class"
+                      value="org.hibernate.hikaricp.internal.HikariCPConnectionProvider"/>
+        </properties>
     </persistence-unit>
 
 </persistence>
