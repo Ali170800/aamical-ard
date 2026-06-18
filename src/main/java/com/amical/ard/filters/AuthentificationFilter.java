@@ -1,5 +1,6 @@
 package com.amical.ard.filters;
 
+import com.amical.ard.utils.EntityManagerHelper;
 import jakarta.servlet.*;
 import jakarta.servlet.annotation.WebFilter;
 import jakarta.servlet.http.HttpServletRequest;
@@ -17,57 +18,70 @@ public class AuthentificationFilter implements Filter {
 
         HttpServletRequest request = (HttpServletRequest) req;
         HttpServletResponse response = (HttpServletResponse) res;
-        HttpSession session = request.getSession(false);
 
-        String uri = request.getRequestURI().toLowerCase();
-        String contextPath = request.getContextPath();
+        // 1. Début de la gestion transactionnelle
+        EntityManagerHelper.beginTransaction();
 
-        // ======================================
-        // URLS PUBLIQUES
-        // ======================================
-        if (isPublicUrl(uri, contextPath)) {
-            chain.doFilter(request, response);
-            return;
-        }
+        try {
+            HttpSession session = request.getSession(false);
+            String uri = request.getRequestURI().toLowerCase();
+            String contextPath = request.getContextPath();
 
-        // ======================================
-        // VÉRIFICATION CONNEXION
-        // ======================================
-        boolean estConnecte = session != null
-                && (session.getAttribute("etudiantConnecte") != null
-                || session.getAttribute("etudiant") != null
-                || session.getAttribute("utilisateurConnecte") != null);
-
-        // ======================================
-        // UTILISATEUR NON CONNECTÉ
-        // ======================================
-        if (!estConnecte) {
-            if (uri.contains("etudiant")) {
-                response.sendRedirect(contextPath + "/pages/connexionEtudiant.jsp");
-            } else {
-                response.sendRedirect(contextPath + "/acceuil.jsp");
+            // ======================================
+            // URLS PUBLIQUES
+            // ======================================
+            if (isPublicUrl(uri, contextPath)) {
+                chain.doFilter(request, response);
+                EntityManagerHelper.commit(); // Valider si lecture seule ou succès
+                return;
             }
-            return;
+
+            // ======================================
+            // VÉRIFICATION CONNEXION
+            // ======================================
+            boolean estConnecte = session != null
+                    && (session.getAttribute("etudiantConnecte") != null
+                    || session.getAttribute("etudiant") != null
+                    || session.getAttribute("utilisateurConnecte") != null);
+
+            if (!estConnecte) {
+                if (uri.contains("etudiant")) {
+                    response.sendRedirect(contextPath + "/pages/connexionEtudiant.jsp");
+                } else {
+                    response.sendRedirect(contextPath + "/acceuil.jsp");
+                }
+                return; // Arrêt de la chaîne, la transaction sera rollback/fermée dans finally
+            }
+
+            // ======================================
+            // PROTECTION ÉTUDIANT / ADMIN
+            // ======================================
+            boolean estEtudiant = session.getAttribute("etudiantConnecte") != null
+                    || "ETUDIANT".equals(session.getAttribute("userType"));
+
+            if (estEtudiant && (uri.contains("/admin") || uri.contains("/bureau"))) {
+                response.sendRedirect(contextPath + "/espace-etudiant");
+                return;
+            }
+
+            // Poursuite de la chaîne normale
+            chain.doFilter(request, response);
+
+            // 2. Commit si tout s'est bien passé
+            EntityManagerHelper.commit();
+
+        } catch (Exception e) {
+            // 3. Rollback en cas d'erreur
+            EntityManagerHelper.rollback();
+            throw new ServletException(e);
+        } finally {
+            // 4. Fermeture impérative de l'EntityManager
+            EntityManagerHelper.closeEntityManager();
         }
-
-        // ======================================
-        // PROTECTION ÉTUDIANT / ADMIN
-        // ======================================
-        boolean estEtudiant = session.getAttribute("etudiantConnecte") != null
-                || "ETUDIANT".equals(session.getAttribute("userType"));
-
-        if (estEtudiant && (uri.contains("/admin") || uri.contains("/bureau"))) {
-            response.sendRedirect(contextPath + "/espace-etudiant");
-            return;
-        }
-
-        chain.doFilter(request, response);
     }
 
-    // =====================================================
-    // MÉTHODE URL PUBLIQUE
-    // =====================================================
     private boolean isPublicUrl(String uri, String contextPath) {
+        // Votre logique de méthode isPublicUrl reste inchangée
         uri = uri.toLowerCase();
         return uri.endsWith("/acceuil.jsp")
                 || uri.endsWith("/accueil.jsp")
