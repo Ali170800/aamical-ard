@@ -50,6 +50,8 @@ public class EtudiantInscriptionServlet extends HttpServlet {
         }
 
         String codeValidation = UUID.randomUUID().toString().substring(0, 6).toUpperCase();
+
+        // Utilisation du Helper global
         EntityManager em = EntityManagerHelper.getEntityManager();
         EtudiantDAO dao = new EtudiantDAO(em);
 
@@ -77,24 +79,17 @@ public class EtudiantInscriptionServlet extends HttpServlet {
             etudiant.setAdresse(adresse);
             etudiant.setNumeroUrgence(numeroUrgence);
             etudiant.setPathologie(pathologie);
+
             etudiant.setMotDePasse(null);
             etudiant.setStatut("PENDING");
             etudiant.setCodeValidation(codeValidation);
 
+            // On retire begin/commit/rollback : le filtre s'en occupe
             dao.ajouter(etudiant);
 
-            // Email de validation
-            String messageValidation = "Code de validation : " + codeValidation;
-            emailService.envoyerEmail(email, "Activation compte", messageValidation);
-
-            // Email de confirmation (après succès)
-            String messageConfirmation = "Bonjour " + prenom + " " + nom + ",\n\n" +
-                    "Nous vous confirmons que vous êtes désormais inscrit dans l'amicale des étudiants de Diourbel.\n" +
-                    "Votre identifiant d'étudiant est : " + etudiant.getId() + "\n\n" +
-                    "Bienvenue parmi nous !\n\n" +
-                    "L'équipe de l'amicale.";
-
-            emailService.envoyerEmail(email, "Confirmation inscription", messageConfirmation);
+            // Email
+            String message = "Code de validation : " + codeValidation;
+            emailService.envoyerEmail(email, "Activation compte", message);
 
             request.setAttribute("email", email);
             request.setAttribute("success", "Inscription réussie ! Vérifiez votre email.");
