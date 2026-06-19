@@ -3,7 +3,7 @@ package com.amical.ard.servlets;
 import com.amical.ard.dao.EtudiantDAO;
 import com.amical.ard.entites.Etudiant;
 import com.amical.ard.services.EmailService;
-import com.amical.ard.utils.JpaUtil;
+import com.amical.ard.utils.EntityManagerHelper;
 import jakarta.persistence.EntityManager;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -31,7 +31,6 @@ public class EtudiantInscriptionServlet extends HttpServlet {
         String prenom = request.getParameter("prenom");
         String nom = request.getParameter("nom");
         String email = request.getParameter("email");
-
         String telephone = request.getParameter("telephone");
         String sexe = request.getParameter("sexe");
         String filiere = request.getParameter("filiere");
@@ -40,8 +39,6 @@ public class EtudiantInscriptionServlet extends HttpServlet {
         String adresse = request.getParameter("adresse");
         String numeroUrgence = request.getParameter("numeroUrgence");
         String pathologie = request.getParameter("pathologie");
-
-        // ❌ PLUS DE MOT DE PASSE ICI
 
         if (prenom == null || nom == null || email == null ||
                 prenom.trim().isEmpty() || nom.trim().isEmpty() ||
@@ -53,8 +50,7 @@ public class EtudiantInscriptionServlet extends HttpServlet {
         }
 
         String codeValidation = UUID.randomUUID().toString().substring(0, 6).toUpperCase();
-
-        EntityManager em = JpaUtil.getEntityManagerFactory().createEntityManager();
+        EntityManager em = EntityManagerHelper.getEntityManager();
         EtudiantDAO dao = new EtudiantDAO(em);
 
         try {
@@ -81,30 +77,34 @@ public class EtudiantInscriptionServlet extends HttpServlet {
             etudiant.setAdresse(adresse);
             etudiant.setNumeroUrgence(numeroUrgence);
             etudiant.setPathologie(pathologie);
-
-            etudiant.setMotDePasse(null); // 🔥 important
+            etudiant.setMotDePasse(null);
             etudiant.setStatut("PENDING");
             etudiant.setCodeValidation(codeValidation);
 
-            em.getTransaction().begin();
             dao.ajouter(etudiant);
-            em.getTransaction().commit();
 
-            // Email
-            String message = "Code de validation : " + codeValidation;
-            emailService.envoyerEmail(email, "Activation compte", message);
+            // Email de validation
+            String messageValidation = "Code de validation : " + codeValidation;
+            emailService.envoyerEmail(email, "Activation compte", messageValidation);
+
+            // Email de confirmation (après succès)
+            String messageConfirmation = "Bonjour " + prenom + " " + nom + ",\n\n" +
+                    "Nous vous confirmons que vous êtes désormais inscrit dans l'amicale des étudiants de Diourbel.\n" +
+                    "Votre identifiant d'étudiant est : " + etudiant.getId() + "\n\n" +
+                    "Bienvenue parmi nous !\n\n" +
+                    "L'équipe de l'amicale.";
+
+            emailService.envoyerEmail(email, "Confirmation inscription", messageConfirmation);
 
             request.setAttribute("email", email);
             request.setAttribute("success", "Inscription réussie ! Vérifiez votre email.");
             request.getRequestDispatcher("/pages/verificationCode.jsp").forward(request, response);
 
         } catch (Exception e) {
-            if (em.getTransaction().isActive()) em.getTransaction().rollback();
             e.printStackTrace();
             request.setAttribute("erreur", "Erreur lors de l'inscription.");
             doGet(request, response);
-        } finally {
-            em.close();
         }
+        // finally { em.close(); } supprimé : géré par le filtre
     }
 }
