@@ -4,10 +4,9 @@ import com.amical.ard.dao.LogementEtudiantDAO;
 import com.amical.ard.dao.AppartementDAO;
 import com.amical.ard.entites.LogementEtudiant;
 import com.amical.ard.entites.Appartement;
+import com.amical.ard.utils.EntityManagerHelper;
 
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.EntityManagerFactory;
-import jakarta.persistence.Persistence;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -26,8 +25,7 @@ public class ListeLogementsServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        EntityManagerFactory emf = Persistence.createEntityManagerFactory("amicalePU");
-        EntityManager em = emf.createEntityManager();
+        EntityManager em = EntityManagerHelper.getEntityManager();
 
         try {
             LogementEtudiantDAO logementDAO = new LogementEtudiantDAO(em);
@@ -43,8 +41,12 @@ public class ListeLogementsServlet extends HttpServlet {
             List<LogementEtudiant> logementsFiltres = tousLogements;
 
             // Filtre par appartement
-            if (appartementIdStr != null && !appartementIdStr.isEmpty() && !"tous".equals(appartementIdStr)) {
+            if (appartementIdStr != null
+                    && !appartementIdStr.isEmpty()
+                    && !"tous".equals(appartementIdStr)) {
+
                 Integer appartId = Integer.parseInt(appartementIdStr);
+
                 logementsFiltres = logementsFiltres.stream()
                         .filter(l -> l.getAppartement().getId().equals(appartId))
                         .collect(Collectors.toList());
@@ -52,11 +54,19 @@ public class ListeLogementsServlet extends HttpServlet {
 
             // Recherche dynamique (nom ou prénom)
             if (recherche != null && !recherche.trim().isEmpty()) {
+
                 String term = recherche.toLowerCase().trim();
+
                 logementsFiltres = logementsFiltres.stream()
                         .filter(l -> {
-                            String nom = l.getEtudiant().getNom() != null ? l.getEtudiant().getNom().toLowerCase() : "";
-                            String prenom = l.getEtudiant().getPrenom() != null ? l.getEtudiant().getPrenom().toLowerCase() : "";
+                            String nom = l.getEtudiant().getNom() != null
+                                    ? l.getEtudiant().getNom().toLowerCase()
+                                    : "";
+
+                            String prenom = l.getEtudiant().getPrenom() != null
+                                    ? l.getEtudiant().getPrenom().toLowerCase()
+                                    : "";
+
                             return nom.contains(term) || prenom.contains(term);
                         })
                         .collect(Collectors.toList());
@@ -75,11 +85,11 @@ public class ListeLogementsServlet extends HttpServlet {
             request.setAttribute("recherche", recherche);
             request.setAttribute("appartementIdSelectionne", appartementIdStr);
 
-            request.getRequestDispatcher("/pages/ListeLogements.jsp").forward(request, response);
+            request.getRequestDispatcher("/pages/ListeLogements.jsp")
+                    .forward(request, response);
 
         } finally {
-            em.close();
-            emf.close();
+            EntityManagerHelper.closeEntityManager();
         }
     }
 }

@@ -1,14 +1,12 @@
-
-        package com.amical.ard.servlets;
+package com.amical.ard.servlets;
 
 import com.amical.ard.dao.CommentairePublicationDAO;
 import com.amical.ard.entites.CommentairePublication;
 import com.amical.ard.entites.Utilisateur;
 import com.amical.ard.entites.Etudiant;
+import com.amical.ard.utils.EntityManagerHelper;
 
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.EntityManagerFactory;
-import jakarta.persistence.Persistence;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -24,24 +22,13 @@ import java.time.LocalDateTime;
 @WebServlet("/etudiant/commenter-publication")
 public class CommentairePublicationServlet extends HttpServlet {
 
-    private EntityManagerFactory emf;
-
-    @Override
-    public void init() {
-
-        emf =
-                Persistence.createEntityManagerFactory(
-                        "amicalePU"
-                );
-    }
-
     @Override
     protected void doPost(HttpServletRequest request,
                           HttpServletResponse response)
             throws ServletException, IOException {
 
         EntityManager em =
-                emf.createEntityManager();
+                EntityManagerHelper.getEntityManager();
 
         try {
 
@@ -60,7 +47,7 @@ public class CommentairePublicationServlet extends HttpServlet {
                                     "utilisateurConnecte"
                             );
 
-            if(admin != null){
+            if (admin != null) {
 
                 utilisateurId =
                         admin.getId().longValue();
@@ -70,7 +57,7 @@ public class CommentairePublicationServlet extends HttpServlet {
             // ETUDIANT CONNECTÉ
             // =========================
 
-            if(utilisateurId == null){
+            if (utilisateurId == null) {
 
                 Etudiant etudiant =
                         (Etudiant)
@@ -78,7 +65,7 @@ public class CommentairePublicationServlet extends HttpServlet {
                                         "etudiantConnecte"
                                 );
 
-                if(etudiant != null){
+                if (etudiant != null) {
 
                     utilisateurId =
                             etudiant.getId();
@@ -89,7 +76,7 @@ public class CommentairePublicationServlet extends HttpServlet {
             // SÉCURITÉ
             // =========================
 
-            if(utilisateurId == null){
+            if (utilisateurId == null) {
 
                 response.sendRedirect(
                         request.getContextPath()
@@ -167,17 +154,7 @@ public class CommentairePublicationServlet extends HttpServlet {
 
         } finally {
 
-            em.close();
-        }
-    }
-
-    @Override
-    public void destroy() {
-
-        if(emf != null){
-
-            emf.close();
+            EntityManagerHelper.closeEntityManager();
         }
     }
 }
-
