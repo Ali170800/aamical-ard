@@ -51,14 +51,14 @@ public class EtudiantInscriptionServlet extends HttpServlet {
 
         String codeValidation = UUID.randomUUID().toString().substring(0, 6).toUpperCase();
 
-        // Utilisation du Helper global
+        // Utilisation du Helper global partagé par le Filtre
         EntityManager em = EntityManagerHelper.getEntityManager();
         EtudiantDAO dao = new EtudiantDAO(em);
 
         try {
             List<Etudiant> existants = em.createQuery(
                             "SELECT e FROM Etudiant e WHERE LOWER(TRIM(e.email)) = LOWER(TRIM(:email))", Etudiant.class)
-                    .setParameter("email", email)
+                    .setParameter("email", email.trim().toLowerCase())
                     .getResultList();
 
             if (!existants.isEmpty()) {
@@ -84,14 +84,14 @@ public class EtudiantInscriptionServlet extends HttpServlet {
             etudiant.setStatut("PENDING");
             etudiant.setCodeValidation(codeValidation);
 
-            // On retire begin/commit/rollback : le filtre s'en occupe
+            // Suppression du begin/commit manuel : le Filtre gère la transaction
             dao.ajouter(etudiant);
 
             // Email
             String message = "Code de validation : " + codeValidation;
-            emailService.envoyerEmail(email, "Activation compte", message);
+            emailService.envoyerEmail(etudiant.getEmail(), "Activation compte", message);
 
-            request.setAttribute("email", email);
+            request.setAttribute("email", etudiant.getEmail());
             request.setAttribute("success", "Inscription réussie ! Vérifiez votre email.");
             request.getRequestDispatcher("/pages/verificationCode.jsp").forward(request, response);
 
@@ -100,6 +100,6 @@ public class EtudiantInscriptionServlet extends HttpServlet {
             request.setAttribute("erreur", "Erreur lors de l'inscription.");
             doGet(request, response);
         }
-        // finally { em.close(); } supprimé : géré par le filtre
+        // Suppression du finally { em.close(); } : le Filtre ferme la connexion
     }
 }

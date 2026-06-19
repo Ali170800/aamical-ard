@@ -2,7 +2,7 @@ package com.amical.ard.servlets;
 
 import com.amical.ard.dao.FichierJointDAO;
 import com.amical.ard.entites.Utilisateur;
-import com.amical.ard.utils.JpaUtil;
+import com.amical.ard.utils.EntityManagerHelper;
 
 import jakarta.persistence.EntityManager;
 import jakarta.servlet.ServletException;
@@ -25,23 +25,17 @@ public class ListeFichiersServlet extends HttpServlet {
                 (Utilisateur) session.getAttribute("utilisateurConnecte");
 
         if (utilisateur == null) {
-
             response.sendRedirect(
                     request.getContextPath() + "/login.jsp"
             );
-
             return;
         }
 
-        EntityManager em = null;
+        // Récupération via le Helper global
+        EntityManager em = EntityManagerHelper.getEntityManager();
 
         try {
-
-            em = JpaUtil.getEntityManagerFactory()
-                    .createEntityManager();
-
-            FichierJointDAO dao =
-                    new FichierJointDAO(em);
+            FichierJointDAO dao = new FichierJointDAO(em);
 
             request.setAttribute(
                     "fichiers",
@@ -52,11 +46,10 @@ public class ListeFichiersServlet extends HttpServlet {
                     "/pages/fichiers/listeFichiers.jsp"
             ).forward(request, response);
 
-        } finally {
-
-            if (em != null && em.isOpen()) {
-                em.close();
-            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Erreur lors de la récupération des fichiers.");
         }
+        // finally { em.close(); } supprimé : géré par le Filtre
     }
 }

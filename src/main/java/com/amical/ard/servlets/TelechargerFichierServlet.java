@@ -2,7 +2,7 @@ package com.amical.ard.servlets;
 
 import com.amical.ard.dao.FichierJointDAO;
 import com.amical.ard.entites.FichierJoint;
-import com.amical.ard.utils.JpaUtil;
+import com.amical.ard.utils.EntityManagerHelper;
 
 import jakarta.persistence.EntityManager;
 import jakarta.servlet.ServletException;
@@ -22,66 +22,42 @@ public class TelechargerFichierServlet extends HttpServlet {
                          HttpServletResponse response)
             throws ServletException, IOException {
 
-        int id =
-                Integer.parseInt(
-                        request.getParameter("id")
-                );
+        int id = Integer.parseInt(request.getParameter("id"));
 
-        EntityManager em =
-                JpaUtil.getEntityManagerFactory()
-                        .createEntityManager();
+        // Utilisation du Helper global
+        EntityManager em = EntityManagerHelper.getEntityManager();
 
         try {
-
-            FichierJointDAO dao =
-                    new FichierJointDAO(em);
-
-            FichierJoint fichier =
-                    dao.trouverParId(id);
+            FichierJointDAO dao = new FichierJointDAO(em);
+            FichierJoint fichier = dao.trouverParId(id);
 
             if (fichier == null) {
-
-                response.sendError(
-                        HttpServletResponse.SC_NOT_FOUND
-                );
-
+                response.sendError(HttpServletResponse.SC_NOT_FOUND);
                 return;
             }
 
-            File pdf =
-                    new File(
-                            fichier.getCheminFichier()
-                    );
+            File pdf = new File(fichier.getCheminFichier());
 
             response.setContentType("application/pdf");
-
             response.setHeader(
                     "Content-Disposition",
-                    "inline; filename=\""
-                            + fichier.getNomFichier()
-                            + "\""
+                    "inline; filename=\"" + fichier.getNomFichier() + "\""
             );
 
-            FileInputStream in =
-                    new FileInputStream(pdf);
+            try (FileInputStream in = new FileInputStream(pdf);
+                 OutputStream out = response.getOutputStream()) {
 
-            OutputStream out =
-                    response.getOutputStream();
-
-            byte[] buffer = new byte[4096];
-
-            int length;
-
-            while ((length = in.read(buffer)) > 0) {
-                out.write(buffer, 0, length);
+                byte[] buffer = new byte[4096];
+                int length;
+                while ((length = in.read(buffer)) > 0) {
+                    out.write(buffer, 0, length);
+                }
             }
 
-            in.close();
-            out.close();
-
-        } finally {
-
-            em.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Erreur lors du téléchargement.");
         }
+        // finally { em.close(); } supprimé : géré par le Filtre
     }
 }
