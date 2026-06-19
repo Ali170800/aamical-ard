@@ -3,7 +3,7 @@ package com.amical.ard.servlets;
 import com.amical.ard.dao.EtudiantDAO;
 import com.amical.ard.entites.Etudiant;
 import com.amical.ard.services.EmailService;
-import com.amical.ard.utils.EntityManagerHelper;
+import com.amical.ard.utils.JpaUtil;
 import jakarta.persistence.EntityManager;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -31,6 +31,7 @@ public class EtudiantInscriptionServlet extends HttpServlet {
         String prenom = request.getParameter("prenom");
         String nom = request.getParameter("nom");
         String email = request.getParameter("email");
+
         String telephone = request.getParameter("telephone");
         String sexe = request.getParameter("sexe");
         String filiere = request.getParameter("filiere");
@@ -39,6 +40,8 @@ public class EtudiantInscriptionServlet extends HttpServlet {
         String adresse = request.getParameter("adresse");
         String numeroUrgence = request.getParameter("numeroUrgence");
         String pathologie = request.getParameter("pathologie");
+
+        // ❌ PLUS DE MOT DE PASSE ICI
 
         if (prenom == null || nom == null || email == null ||
                 prenom.trim().isEmpty() || nom.trim().isEmpty() ||
@@ -51,14 +54,13 @@ public class EtudiantInscriptionServlet extends HttpServlet {
 
         String codeValidation = UUID.randomUUID().toString().substring(0, 6).toUpperCase();
 
-        // Utilisation du Helper global partagé par le Filtre
-        EntityManager em = EntityManagerHelper.getEntityManager();
+        EntityManager em = JpaUtil.getEntityManagerFactory().createEntityManager();
         EtudiantDAO dao = new EtudiantDAO(em);
 
         try {
             List<Etudiant> existants = em.createQuery(
                             "SELECT e FROM Etudiant e WHERE LOWER(TRIM(e.email)) = LOWER(TRIM(:email))", Etudiant.class)
-                    .setParameter("email", email.trim().toLowerCase())
+                    .setParameter("email", email)
                     .getResultList();
 
             if (!existants.isEmpty()) {
@@ -80,26 +82,29 @@ public class EtudiantInscriptionServlet extends HttpServlet {
             etudiant.setNumeroUrgence(numeroUrgence);
             etudiant.setPathologie(pathologie);
 
-            etudiant.setMotDePasse(null);
+            etudiant.setMotDePasse(null); // 🔥 important
             etudiant.setStatut("PENDING");
             etudiant.setCodeValidation(codeValidation);
 
-            // Suppression du begin/commit manuel : le Filtre gère la transaction
+            em.getTransaction().begin();
             dao.ajouter(etudiant);
+            em.getTransaction().commit();
 
             // Email
             String message = "Code de validation : " + codeValidation;
-            emailService.envoyerEmail(etudiant.getEmail(), "Activation compte", message);
+            emailService.envoyerEmail(email, "Activation compte", message);
 
-            request.setAttribute("email", etudiant.getEmail());
+            request.setAttribute("email", email);
             request.setAttribute("success", "Inscription réussie ! Vérifiez votre email.");
             request.getRequestDispatcher("/pages/verificationCode.jsp").forward(request, response);
 
         } catch (Exception e) {
+            if (em.getTransaction().isActive()) em.getTransaction().rollback();
             e.printStackTrace();
             request.setAttribute("erreur", "Erreur lors de l'inscription.");
             doGet(request, response);
+        } finally {
+            em.close();
         }
-        // Suppression du finally { em.close(); } : le Filtre ferme la connexion
     }
 }
