@@ -46,7 +46,7 @@ public class EtudiantServlet extends HttpServlet {
         request.setAttribute("valPrenom", prenom);
         request.setAttribute("valTelephone", telephone);
 
-        em.close();
+        // em.close() supprimé car géré par le filtre
         request.getRequestDispatcher("/pages/ListeEtudiants.jsp").forward(request, response);
     }
 }

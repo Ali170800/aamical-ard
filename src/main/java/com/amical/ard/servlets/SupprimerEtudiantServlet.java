@@ -13,7 +13,8 @@ import java.io.IOException;
 @WebServlet("/supprimerEtudiant")
 public class SupprimerEtudiantServlet extends HttpServlet {
 
-    private final EtudiantService etudiantService = new EtudiantService(null);
+    // On initialise le service directement avec l'EntityManager du contexte
+    private final EtudiantService etudiantService = new EtudiantService(EntityManagerHelper.getEntityManager());
 
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
@@ -22,11 +23,8 @@ public class SupprimerEtudiantServlet extends HttpServlet {
         try {
             Long id = Long.parseLong(request.getParameter("id"));
 
-            etudiantService.setEntityManager(EntityManagerHelper.getEntityManager());
-
-            EntityManagerHelper.beginTransaction();
+            // Le filtre gère déjà la transaction, on exécute simplement la logique métier
             boolean success = etudiantService.supprimerEtudiant(id);
-            EntityManagerHelper.commit();
 
             if (success) {
                 request.getSession().setAttribute("success", "Étudiant supprimé avec succès !");
@@ -35,12 +33,10 @@ public class SupprimerEtudiantServlet extends HttpServlet {
             }
 
         } catch (Exception e) {
-            EntityManagerHelper.rollback();
             e.printStackTrace();
             request.getSession().setAttribute("error", "Erreur lors de la suppression : " + e.getMessage());
-        } finally {
-            EntityManagerHelper.closeEntityManager();
         }
+        // finally { EntityManagerHelper.closeEntityManager(); } est supprimé : géré par le filtre
 
         response.sendRedirect(request.getContextPath() + "/etudiants");
     }

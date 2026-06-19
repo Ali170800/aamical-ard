@@ -35,15 +35,13 @@ public class AjouterLogementServlet extends HttpServlet {
         int successCount = 0;
         int skippedCount = 0;
 
-        EntityManager em = null;
+        EntityManager em = EntityManagerHelper.getEntityManager();
 
         try {
-            em = EntityManagerHelper.getEntityManager();
-
             EtudiantDAO etudiantDAO = new EtudiantDAO(em);
             AppartementDAO appartementDAO = new AppartementDAO(em);
             LogementEtudiantDAO logementDAO = new LogementEtudiantDAO(em);
-            ActionLogDAO actionLogDAO = new ActionLogDAO(em);   // ← Nouveau
+            ActionLogDAO actionLogDAO = new ActionLogDAO(em);
 
             // Récupérer l'utilisateur connecté pour la traçabilité
             HttpSession session = request.getSession();
@@ -137,10 +135,6 @@ public class AjouterLogementServlet extends HttpServlet {
             e.printStackTrace();
             request.getSession().setAttribute("error", "Erreur lors de l'ajout des logements.");
             response.sendRedirect(request.getContextPath() + "/formulaire-logement");
-        } finally {
-            if (em != null) {
-                EntityManagerHelper.closeEntityManager();
-            }
         }
     }
 }
