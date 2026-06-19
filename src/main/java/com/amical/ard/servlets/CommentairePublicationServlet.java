@@ -152,9 +152,6 @@ public class CommentairePublicationServlet extends HttpServlet {
                             + e.getMessage()
             );
 
-        } finally {
-
-            EntityManagerHelper.closeEntityManager();
         }
     }
 }

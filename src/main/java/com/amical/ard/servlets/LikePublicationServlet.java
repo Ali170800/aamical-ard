@@ -1,17 +1,13 @@
-
-        package com.amical.ard.servlets;
+package com.amical.ard.servlets;
 
 import com.amical.ard.dao.LikePublicationDAO;
 import com.amical.ard.entites.Utilisateur;
 import com.amical.ard.entites.Etudiant;
+import com.amical.ard.utils.EntityManagerHelper;
 
 import jakarta.persistence.EntityManager;
-import jakarta.persistence.EntityManagerFactory;
-import jakarta.persistence.Persistence;
-
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
-
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -22,24 +18,12 @@ import java.io.IOException;
 @WebServlet("/like-publication")
 public class LikePublicationServlet extends HttpServlet {
 
-    private EntityManagerFactory emf;
-
-    @Override
-    public void init() {
-
-        emf =
-                Persistence.createEntityManagerFactory(
-                        "amicalePU"
-                );
-    }
-
     @Override
     protected void doPost(HttpServletRequest request,
                           HttpServletResponse response)
             throws ServletException, IOException {
 
-        EntityManager em =
-                emf.createEntityManager();
+        EntityManager em = EntityManagerHelper.getEntityManager();
 
         try {
 
@@ -147,18 +131,7 @@ public class LikePublicationServlet extends HttpServlet {
                             + e.getMessage()
             );
 
-        } finally {
-
-            em.close();
         }
-    }
-
-    @Override
-    public void destroy() {
-
-        if(emf != null){
-
-            emf.close();
-        }
+        // Le em.close() est retiré car il est maintenant géré globalement par votre Filtre.
     }
 }
