@@ -23,115 +23,44 @@ public class LikePublicationServlet extends HttpServlet {
                           HttpServletResponse response)
             throws ServletException, IOException {
 
+        // EntityManager géré par le filtre (ne jamais fermer ici)
         EntityManager em = EntityManagerHelper.getEntityManager();
 
         try {
-
-            HttpSession session =
-                    request.getSession(false);
-
+            HttpSession session = request.getSession(false);
             Long utilisateurId = null;
 
-            // =========================
-            // ADMIN CONNECTÉ
-            // =========================
-
-            Utilisateur admin =
-                    (Utilisateur)
-                            session.getAttribute(
-                                    "utilisateurConnecte"
-                            );
-
+            // Récupération de l'utilisateur
+            Utilisateur admin = (Utilisateur) session.getAttribute("utilisateurConnecte");
             if(admin != null){
-
-                utilisateurId =
-                        admin.getId().longValue();
-            }
-
-            // =========================
-            // ETUDIANT CONNECTÉ
-            // =========================
-
-            if(utilisateurId == null){
-
-                Etudiant etudiant =
-                        (Etudiant)
-                                session.getAttribute(
-                                        "etudiantConnecte"
-                                );
-
+                utilisateurId = admin.getId().longValue();
+            } else {
+                Etudiant etudiant = (Etudiant) session.getAttribute("etudiantConnecte");
                 if(etudiant != null){
-
-                    utilisateurId =
-                            etudiant.getId();
+                    utilisateurId = etudiant.getId();
                 }
             }
 
-            // =========================
-            // SÉCURITÉ
-            // =========================
-
             if(utilisateurId == null){
-
-                response.sendRedirect(
-                        request.getContextPath()
-                                + "/login.jsp"
-                );
-
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                 return;
             }
 
-            // =========================
-            // PUBLICATION
-            // =========================
+            Long publicationId = Long.parseLong(request.getParameter("publicationId"));
+            LikePublicationDAO dao = new LikePublicationDAO(em);
 
-            Long publicationId =
-                    Long.parseLong(
-                            request.getParameter(
-                                    "publicationId"
-                            )
-                    );
-
-            LikePublicationDAO dao =
-                    new LikePublicationDAO(em);
-
-            // =========================
-            // ÉVITER DOUBLE LIKE
-            // =========================
-
-            boolean existe =
-                    dao.existeDeja(
-                            publicationId,
-                            utilisateurId
-                    );
-
-            if(!existe){
-
-                dao.ajouterLike(
-                        publicationId,
-                        utilisateurId
-                );
+            if(!dao.existeDeja(publicationId, utilisateurId)){
+                dao.ajouterLike(publicationId, utilisateurId);
             }
 
-            // =========================
-            // REDIRECTION
-            // =========================
-
-            response.sendRedirect(
-                    request.getContextPath()
-                            + "/liste-publications"
-            );
+            // Réponse rapide en JSON pour JavaScript
+            response.setContentType("application/json");
+            response.getWriter().write("{\"status\": \"success\"}");
 
         } catch (Exception e) {
-
             e.printStackTrace();
-
-            response.getWriter().println(
-                    "Erreur LIKE : "
-                            + e.getMessage()
-            );
-
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            response.getWriter().write("{\"status\": \"error\", \"message\": \"" + e.getMessage() + "\"}");
         }
-        // Le em.close() est retiré car il est maintenant géré globalement par votre Filtre.
     }
 }
