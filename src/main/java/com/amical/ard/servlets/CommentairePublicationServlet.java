@@ -5,17 +5,13 @@ import com.amical.ard.entites.CommentairePublication;
 import com.amical.ard.entites.Utilisateur;
 import com.amical.ard.entites.Etudiant;
 import com.amical.ard.utils.EntityManagerHelper;
-
 import jakarta.persistence.EntityManager;
-
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
-
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
-
 import java.io.IOException;
 import java.time.LocalDateTime;
 
@@ -23,135 +19,49 @@ import java.time.LocalDateTime;
 public class CommentairePublicationServlet extends HttpServlet {
 
     @Override
-    protected void doPost(HttpServletRequest request,
-                          HttpServletResponse response)
-            throws ServletException, IOException {
-
-        EntityManager em =
-                EntityManagerHelper.getEntityManager();
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        EntityManager em = EntityManagerHelper.getEntityManager();
 
         try {
-
-            HttpSession session =
-                    request.getSession(false);
-
+            HttpSession session = request.getSession(false);
             Long utilisateurId = null;
 
-            // =========================
-            // ADMIN CONNECTÉ
-            // =========================
-
-            Utilisateur admin =
-                    (Utilisateur)
-                            session.getAttribute(
-                                    "utilisateurConnecte"
-                            );
-
+            Utilisateur admin = (session != null) ? (Utilisateur) session.getAttribute("utilisateurConnecte") : null;
             if (admin != null) {
-
-                utilisateurId =
-                        admin.getId().longValue();
-            }
-
-            // =========================
-            // ETUDIANT CONNECTÉ
-            // =========================
-
-            if (utilisateurId == null) {
-
-                Etudiant etudiant =
-                        (Etudiant)
-                                session.getAttribute(
-                                        "etudiantConnecte"
-                                );
-
+                utilisateurId = admin.getId().longValue();
+            } else {
+                Etudiant etudiant = (session != null) ? (Etudiant) session.getAttribute("etudiantConnecte") : null;
                 if (etudiant != null) {
-
-                    utilisateurId =
-                            etudiant.getId();
+                    utilisateurId = etudiant.getId();
                 }
             }
 
-            // =========================
-            // SÉCURITÉ
-            // =========================
-
             if (utilisateurId == null) {
-
-                response.sendRedirect(
-                        request.getContextPath()
-                                + "/login.jsp"
-                );
-
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                 return;
             }
 
-            // =========================
-            // DONNÉES
-            // =========================
+            Long publicationId = Long.parseLong(request.getParameter("publicationId"));
+            String texte = request.getParameter("commentaire");
 
-            Long publicationId =
-                    Long.parseLong(
-                            request.getParameter(
-                                    "publicationId"
-                            )
-                    );
+            CommentairePublication commentaire = new CommentairePublication();
+            commentaire.setPublicationId(publicationId);
+            commentaire.setUtilisateurId(utilisateurId);
+            commentaire.setCommentaire(texte);
+            commentaire.setDateCommentaire(LocalDateTime.now());
 
-            String texte =
-                    request.getParameter(
-                            "commentaire"
-                    );
-
-            // =========================
-            // COMMENTAIRE
-            // =========================
-
-            CommentairePublication commentaire =
-                    new CommentairePublication();
-
-            commentaire.setPublicationId(
-                    publicationId
-            );
-
-            commentaire.setUtilisateurId(
-                    utilisateurId
-            );
-
-            commentaire.setCommentaire(
-                    texte
-            );
-
-            commentaire.setDateCommentaire(
-                    LocalDateTime.now()
-            );
-
-            // =========================
-            // SAUVEGARDE
-            // =========================
-
-            CommentairePublicationDAO dao =
-                    new CommentairePublicationDAO(em);
-
+            CommentairePublicationDAO dao = new CommentairePublicationDAO(em);
             dao.ajouter(commentaire);
 
-            // =========================
-            // REDIRECTION
-            // =========================
-
-            response.sendRedirect(
-                    request.getContextPath()
-                            + "/liste-publications"
-            );
+            // Réponse JSON silencieuse
+            response.setContentType("application/json");
+            response.setCharacterEncoding("UTF-8");
+            response.getWriter().write("{\"status\": \"success\"}");
 
         } catch (Exception e) {
-
             e.printStackTrace();
-
-            response.getWriter().println(
-                    "Erreur COMMENTAIRE : "
-                            + e.getMessage()
-            );
-
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            response.getWriter().write("{\"status\": \"error\"}");
         }
     }
 }
