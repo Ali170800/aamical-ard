@@ -15,109 +15,108 @@
 <body class="bg-gray-100">
 
 <div class="max-w-4xl mx-auto py-10 px-4">
-    <button onclick="document.getElementById('modalPub').classList.remove('hidden')"
-            class="bg-blue-600 text-white px-6 py-3 rounded-full shadow-lg mb-8 hover:bg-blue-700 transition">
-        + Nouvelle Publication
-    </button>
-
-    <div id="feed" class="space-y-10">
-        <% if(publications != null) { for(Publication p : publications){ %>
-        <div class="bg-white rounded-3xl shadow-lg p-6" id="pub-<%= p.getId() %>">
-            <p class="font-bold text-lg mb-2"><%= request.getAttribute("auteur_publication_" + p.getId()) %></p>
-            <img src="<%= request.getContextPath() %>/uploads/<%= p.getImage() %>" class="w-full h-auto object-contain bg-gray-50 rounded-xl">
-            <p class="my-4 text-gray-700"><%= p.getDescription() %></p>
-
-            <button onclick="liker('<%= p.getId() %>')" class="text-red-500 font-bold hover:text-red-700">
-                <i class="fas fa-heart"></i> J'aime (<span id="like-count-<%= p.getId() %>"><%= p.getNombreLikes() %></span>)
-            </button>
-
-            <div id="liste-com-<%= p.getId() %>" class="mt-4 space-y-3">
-                <% if(p.getCommentaires() != null) { for(CommentairePublication c : p.getCommentaires()){ %>
-                    <div id="comment-<%= c.getId() %>" class="bg-gray-100 p-3 rounded-xl flex justify-between items-center">
-                        <div><strong><%= request.getAttribute("auteur_commentaire_" + c.getId()) %></strong>: <%= c.getCommentaire() %></div>
-                        <button onclick="supprimerCommentaire('<%= c.getId() %>')" class="text-red-500 text-xs font-bold">Supprimer</button>
-                    </div>
-                <% } } %>
-            </div>
-
-            <form onsubmit="posterCommentaire(event, '<%= p.getId() %>')" class="mt-4">
-                <input type="hidden" name="publicationId" value="<%= p.getId() %>">
-                <textarea name="commentaire" required placeholder="Écrire un commentaire..." class="w-full border p-2 rounded-xl" rows="2"></textarea>
-                <button type="submit" class="bg-green-600 text-white px-4 py-2 mt-2 rounded-lg text-sm">Publier</button>
-            </form>
-        </div>
-        <% } } %>
+    <div class="flex justify-between items-center mb-8">
+        <h1 class="text-3xl font-bold text-gray-800">Fil d'actualité</h1>
+        <a href="<%= request.getContextPath() %>/ajouter-publication"
+           class="bg-blue-600 text-white px-6 py-2 rounded-xl font-bold hover:bg-blue-700 shadow-lg">
+            + Ajouter publication
+        </a>
     </div>
-</div>
 
-<div id="modalPub" class="hidden fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-    <form onsubmit="creerPublication(event)" class="bg-white p-8 rounded-3xl w-full max-w-md shadow-2xl">
-        <h2 class="text-xl font-bold mb-4">Nouvelle Publication</h2>
-        <input type="file" name="image" required class="mb-4 w-full">
-        <textarea name="description" required placeholder="Description..." class="w-full border p-3 rounded-xl mb-4"></textarea>
-        <div class="flex gap-4">
-            <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-lg flex-1">Partager</button>
-            <button type="button" onclick="document.getElementById('modalPub').classList.add('hidden')" class="text-gray-500">Annuler</button>
+    <% if(publications != null && !publications.isEmpty()){ %>
+        <% for(Publication p : publications){
+            // Vérification si l'utilisateur courant est l'auteur (doit être passé via le request)
+            boolean estAuteur = (Boolean) request.getAttribute("est_auteur_" + p.getId());
+        %>
+        <div class="bg-white rounded-3xl shadow-lg mb-10 overflow-hidden" id="pub-<%= p.getId() %>">
+            <img src="<%= request.getContextPath() %>/uploads/<%= p.getImage() %>"
+                 class="w-full h-auto object-contain bg-gray-50" alt="Publication">
+
+            <div class="p-6">
+                <div class="flex items-center justify-between mb-2">
+                    <div class="flex items-center">
+                        <i class="fas fa-user-circle text-2xl text-blue-600 mr-3"></i>
+                        <div>
+                            <p class="font-bold text-gray-800"><%= request.getAttribute("auteur_publication_" + p.getId()) %></p>
+                            <p class="text-xs text-blue-600 font-semibold"><%= request.getAttribute("role_auteur_" + p.getId()) %></p>
+                            <p class="text-xs text-gray-400"><%= request.getAttribute("date_publication_" + p.getId()) %></p>
+                        </div>
+                    </div>
+                    <% if(estAuteur) { %>
+                        <form action="<%= request.getContextPath() %>/supprimer-publication" method="post" onsubmit="return confirm('Supprimer cette publication ?');">
+                            <input type="hidden" name="publicationId" value="<%= p.getId() %>">
+                            <button type="submit" class="text-red-500 hover:text-red-700 font-bold text-sm">
+                                <i class="fas fa-trash"></i> Supprimer
+                            </button>
+                        </form>
+                    <% } %>
+                </div>
+
+                <p class="text-gray-700 text-lg my-4"><%= p.getDescription() %></p>
+
+                <div class="flex gap-6 border-t pt-4">
+                    <button onclick="liker('<%= p.getId() %>')" class="font-bold text-red-500 hover:text-red-700">
+                        <i class="fas fa-heart"></i> J’aime (<span id="like-count-<%= p.getId() %>"><%= p.getNombreLikes() %></span>)
+                    </button>
+
+                    <button onclick="document.getElementById('com-<%= p.getId() %>').classList.toggle('hidden')"
+                            class="font-bold text-blue-600 hover:text-blue-800">
+                        <i class="fas fa-comments"></i> Commentaires (<span id="com-size-<%= p.getId() %>"><%= (p.getCommentaires() != null) ? p.getCommentaires().size() : 0 %></span>)
+                    </button>
+                </div>
+
+                <div id="com-<%= p.getId() %>" class="hidden mt-6 bg-gray-50 p-4 rounded-2xl">
+                    <form onsubmit="posterCommentaire(event, '<%= p.getId() %>')" class="mb-4">
+                        <input type="hidden" name="publicationId" value="<%= p.getId() %>">
+                        <textarea name="commentaire" required placeholder="Écrire un commentaire..." class="w-full p-2 border rounded-xl" rows="2"></textarea>
+                        <button type="submit" class="mt-2 bg-blue-600 text-white px-4 py-1 rounded-lg text-sm">Publier</button>
+                    </form>
+
+                    <div id="liste-com-<%= p.getId() %>" class="space-y-3 max-h-60 overflow-y-auto">
+                        <% if(p.getCommentaires() != null){
+                            for(CommentairePublication c : p.getCommentaires()){
+                                String auteur = (String) request.getAttribute("auteur_commentaire_" + c.getId());
+                        %>
+                            <div class="border-b pb-2">
+                                <p class="font-bold text-sm text-blue-800"><%= auteur != null ? auteur : "Utilisateur" %></p>
+                                <p class="text-gray-700 text-sm"><%= c.getCommentaire() %></p>
+                                <p class="text-[10px] text-gray-400"><%= c.getDateCommentaire().format(dtf) %></p>
+                            </div>
+                        <% } } %>
+                    </div>
+                </div>
+            </div>
         </div>
-    </form>
+        <% } %>
+    <% } else { %>
+        <p class="text-center text-gray-500">Aucune publication pour le moment.</p>
+    <% } %>
 </div>
 
 <script>
-// 1. LIKE
 async function liker(id) {
     const res = await fetch('<%= request.getContextPath() %>/like-publication', {
-        method: 'POST', body: 'publicationId=' + id,
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'}
+        method: 'POST', body: 'publicationId=' + id, headers: {'Content-Type': 'application/x-www-form-urlencoded'}
     });
     if(res.ok) {
-        const data = await res.json();
-        document.getElementById('like-count-' + id).innerText = data.nouveauTotal;
+        const d = await res.json();
+        document.getElementById('like-count-' + id).innerText = d.nouveauTotal;
     }
 }
 
-// 2. POSTER COMMENTAIRE
 async function posterCommentaire(e, id) {
     e.preventDefault();
-    const res = await fetch('<%= request.getContextPath() %>/etudiant/commenter-publication', {
-        method: 'POST', body: new FormData(e.target)
-    });
+    const res = await fetch('<%= request.getContextPath() %>/etudiant/commenter-publication', { method: 'POST', body: new FormData(e.target) });
     if(res.ok) {
         const d = await res.json();
         document.getElementById('liste-com-' + id).insertAdjacentHTML('beforeend', `
-            <div id="comment-${d.id}" class="bg-gray-100 p-3 rounded-xl flex justify-between items-center">
-                <div><strong>${d.auteur}</strong>: ${d.texte}</div>
-                <button onclick="supprimerCommentaire('${d.id}')" class="text-red-500 text-xs font-bold">Supprimer</button>
+            <div class="border-b pb-2">
+                <p class="font-bold text-sm text-blue-800">${d.auteur}</p>
+                <p class="text-gray-700 text-sm">${d.texte}</p>
+                <p class="text-[10px] text-gray-400">${d.date}</p>
             </div>`);
+        document.getElementById('com-size-' + id).innerText = parseInt(document.getElementById('com-size-' + id).innerText) + 1;
         e.target.reset();
-    }
-}
-
-// 3. SUPPRIMER COMMENTAIRE
-async function supprimerCommentaire(id) {
-    if(!confirm("Supprimer ce commentaire ?")) return;
-    const res = await fetch('<%= request.getContextPath() %>/supprimer-commentaire', {
-        method: 'POST', body: 'commentaireId=' + id,
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'}
-    });
-    if(res.ok) document.getElementById('comment-' + id).remove();
-}
-
-// 4. CRÉER PUBLICATION
-async function creerPublication(e) {
-    e.preventDefault();
-    const res = await fetch('<%= request.getContextPath() %>/creer-publication', {
-        method: 'POST', body: new FormData(e.target)
-    });
-    if(res.ok) {
-        const d = await res.json();
-        document.getElementById('feed').insertAdjacentHTML('afterbegin', `
-            <div class="bg-white rounded-3xl shadow-lg p-6" id="pub-${d.id}">
-                <p class="font-bold">${d.auteur}</p>
-                <img src="/uploads/${d.image}" class="w-full rounded-xl my-4">
-                <p>${d.description}</p>
-            </div>`);
-        e.target.reset();
-        document.getElementById('modalPub').classList.add('hidden');
     }
 }
 </script>
