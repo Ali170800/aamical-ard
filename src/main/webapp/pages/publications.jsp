@@ -5,8 +5,7 @@
 
 <%
     List<Publication> publications = (List<Publication>) request.getAttribute("publications");
-    Object admin = session.getAttribute("utilisateurConnecte");
-    boolean estAdmin = admin != null;
+    boolean estAdmin = session.getAttribute("utilisateurConnecte") != null;
 %>
 
 <!DOCTYPE html>
@@ -21,9 +20,7 @@
 
 <div class="max-w-4xl mx-auto py-10 px-4">
     <div class="flex justify-between items-center mb-10">
-        <div>
-            <h1 class="text-4xl font-black text-gray-800">Fil communautaire AERD</h1>
-        </div>
+        <h1 class="text-4xl font-black text-gray-800">Fil communautaire AERD</h1>
         <% if(estAdmin){ %>
             <a href="<%= request.getContextPath() %>/upload/ajouterPublication.jsp" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-2xl font-semibold shadow">
                 <i class="fas fa-plus mr-2"></i> Nouvelle publication
@@ -34,17 +31,28 @@
     <% if(publications != null && !publications.isEmpty()){ %>
         <% for(Publication publication : publications){ %>
         <div class="bg-white rounded-3xl shadow-lg overflow-hidden mb-10" id="pub-<%= publication.getId() %>">
-
             <div class="bg-black flex items-center justify-center w-full" style="height: 500px;">
-                <img src="<%= request.getContextPath() %>/uploads/<%= publication.getImage() %>"
-                     class="w-full h-full object-contain" alt="Publication">
+                <img src="<%= request.getContextPath() %>/uploads/<%= publication.getImage() %>" class="w-full h-full object-contain" alt="Publication">
             </div>
 
             <div class="p-6">
+                <div class="flex items-center justify-between mb-5">
+                    <div class="font-bold text-lg text-gray-800">
+                        <i class="fas fa-user-circle text-blue-600 mr-2"></i>
+                        <%= request.getAttribute("auteur_publication_" + publication.getId()) %>
+                    </div>
+                    <% if(publication.isPeutModifier()){ %>
+                    <form action="<%= request.getContextPath() %>/admin/supprimer-publication" method="post" onsubmit="return confirm('Supprimer ?')">
+                        <input type="hidden" name="id" value="<%= publication.getId() %>">
+                        <button type="submit" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-xl text-sm font-semibold">Supprimer</button>
+                    </form>
+                    <% } %>
+                </div>
+
                 <p class="text-gray-800 text-lg leading-relaxed mb-6"><%= publication.getDescription() %></p>
 
                 <div class="flex items-center gap-6 mt-6 border-t pt-5">
-                    <button class="text-blue-600 font-semibold hover:text-blue-800" onclick="liker(<%= publication.getId() %>)">
+                    <button onclick="liker(<%= publication.getId() %>)" class="text-blue-600 font-semibold hover:text-blue-800">
                         👍 J’aime (<span id="like-count-<%= publication.getId() %>"><%= publication.getNombreLikes() %></span>)
                     </button>
                     <button onclick="toggleCommentaires('commentaires_<%= publication.getId() %>')" class="text-green-600 font-semibold hover:text-green-800">
@@ -58,8 +66,21 @@
                         <textarea name="commentaire" required placeholder="Ajouter un commentaire..." class="w-full border border-gray-300 rounded-2xl p-4 mb-3" rows="3"></textarea>
                         <button type="submit" class="bg-green-600 text-white px-5 py-2 rounded-xl font-semibold">Publier</button>
                     </form>
+
                     <div id="liste-com-<%= publication.getId() %>" class="space-y-4">
-                        </div>
+                        <%
+                           List<CommentairePublication> coms = (List<CommentairePublication>) request.getAttribute("commentaires_" + publication.getId());
+                           if(coms != null) {
+                               for(CommentairePublication com : coms) {
+                        %>
+                           <div class="bg-gray-100 rounded-2xl p-4">
+                               <div class="font-bold text-blue-700"><%= request.getAttribute("auteur_commentaire_" + com.getId()) %></div>
+                               <div><%= com.getCommentaire() %></div>
+                           </div>
+                        <%     }
+                           }
+                        %>
+                    </div>
                 </div>
             </div>
         </div>
@@ -68,27 +89,29 @@
 </div>
 
 <script>
-    // Fonction pour basculer l'affichage
     function toggleCommentaires(id) {
         document.getElementById(id).classList.toggle("hidden");
     }
 
-    // Fonction AJAX pour poster un commentaire sans recharger
     function posterCommentaire(event, pubId) {
         event.preventDefault();
-        const formData = new FormData(event.target);
+        const form = event.target;
+        const formData = new FormData(form);
 
         fetch('<%= request.getContextPath() %>/etudiant/commenter-publication', {
             method: 'POST',
             body: new URLSearchParams(formData)
-        }).then(() => {
-            alert('Commentaire publié !');
-            event.target.reset(); // Vide le textarea
-            // Ici, vous pourriez rafraîchir dynamiquement la liste si nécessaire
+        }).then(response => {
+            if(response.ok) {
+                const nouveauCom = document.createElement('div');
+                nouveauCom.className = "bg-gray-100 rounded-2xl p-4 mt-2";
+                nouveauCom.innerHTML = `<div class="font-bold text-blue-700">Vous</div><div>${form.commentaire.value}</div>`;
+                document.getElementById('liste-com-' + pubId).appendChild(nouveauCom);
+                form.reset();
+            }
         });
     }
 
-    // Fonction AJAX pour le Like
     function liker(pubId) {
         fetch('<%= request.getContextPath() %>/like-publication', {
             method: 'POST',
