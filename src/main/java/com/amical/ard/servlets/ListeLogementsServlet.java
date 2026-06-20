@@ -25,6 +25,7 @@ public class ListeLogementsServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
+        // On récupère l'EM, le filtre se chargera de le fermer automatiquement après le forward
         EntityManager em = EntityManagerHelper.getEntityManager();
 
         try {
@@ -48,25 +49,20 @@ public class ListeLogementsServlet extends HttpServlet {
                 Integer appartId = Integer.parseInt(appartementIdStr);
 
                 logementsFiltres = logementsFiltres.stream()
-                        .filter(l -> l.getAppartement().getId().equals(appartId))
+                        .filter(l -> l.getAppartement() != null && l.getAppartement().getId().equals(appartId))
                         .collect(Collectors.toList());
             }
 
             // Recherche dynamique (nom ou prénom)
             if (recherche != null && !recherche.trim().isEmpty()) {
-
                 String term = recherche.toLowerCase().trim();
 
                 logementsFiltres = logementsFiltres.stream()
                         .filter(l -> {
-                            String nom = l.getEtudiant().getNom() != null
-                                    ? l.getEtudiant().getNom().toLowerCase()
-                                    : "";
-
-                            String prenom = l.getEtudiant().getPrenom() != null
-                                    ? l.getEtudiant().getPrenom().toLowerCase()
-                                    : "";
-
+                            String nom = (l.getEtudiant() != null && l.getEtudiant().getNom() != null)
+                                    ? l.getEtudiant().getNom().toLowerCase() : "";
+                            String prenom = (l.getEtudiant() != null && l.getEtudiant().getPrenom() != null)
+                                    ? l.getEtudiant().getPrenom().toLowerCase() : "";
                             return nom.contains(term) || prenom.contains(term);
                         })
                         .collect(Collectors.toList());
@@ -75,7 +71,7 @@ public class ListeLogementsServlet extends HttpServlet {
             // Calcul du résumé par appartement
             Map<String, Long> statsParAppartement = tousLogements.stream()
                     .collect(Collectors.groupingBy(
-                            l -> l.getAppartement().getNomAppartement(),
+                            l -> (l.getAppartement() != null) ? l.getAppartement().getNomAppartement() : "Inconnu",
                             Collectors.counting()
                     ));
 
@@ -88,8 +84,11 @@ public class ListeLogementsServlet extends HttpServlet {
             request.getRequestDispatcher("/pages/ListeLogements.jsp")
                     .forward(request, response);
 
-        } finally {
-            EntityManagerHelper.closeEntityManager();
+        } catch (Exception e) {
+            e.printStackTrace();
+            request.setAttribute("erreur", "Erreur lors du chargement des logements.");
+            request.getRequestDispatcher("/pages/Erreur.jsp").forward(request, response);
         }
+        // PLUS DE finally { EntityManagerHelper.closeEntityManager(); } ici
     }
 }

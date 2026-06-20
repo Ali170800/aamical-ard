@@ -19,119 +19,54 @@ import java.io.IOException;
 public class LikePublicationServlet extends HttpServlet {
 
     @Override
-    protected void doPost(HttpServletRequest request,
-                          HttpServletResponse response)
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
+        // Le filtre gère l'EntityManager, on le récupère simplement
         EntityManager em = EntityManagerHelper.getEntityManager();
 
         try {
-
-            HttpSession session =
-                    request.getSession(false);
-
+            HttpSession session = request.getSession(false);
             Long utilisateurId = null;
 
-            // =========================
-            // ADMIN CONNECTÉ
-            // =========================
-
-            Utilisateur admin =
-                    (Utilisateur)
-                            session.getAttribute(
-                                    "utilisateurConnecte"
-                            );
-
-            if(admin != null){
-
-                utilisateurId =
-                        admin.getId().longValue();
-            }
-
-            // =========================
-            // ETUDIANT CONNECTÉ
-            // =========================
-
-            if(utilisateurId == null){
-
-                Etudiant etudiant =
-                        (Etudiant)
-                                session.getAttribute(
-                                        "etudiantConnecte"
-                                );
-
-                if(etudiant != null){
-
-                    utilisateurId =
-                            etudiant.getId();
+            // Récupération de l'utilisateur
+            Utilisateur admin = (session != null) ? (Utilisateur) session.getAttribute("utilisateurConnecte") : null;
+            if (admin != null) {
+                utilisateurId = admin.getId().longValue();
+            } else {
+                Etudiant etudiant = (session != null) ? (Etudiant) session.getAttribute("etudiantConnecte") : null;
+                if (etudiant != null) {
+                    utilisateurId = etudiant.getId();
                 }
             }
 
-            // =========================
-            // SÉCURITÉ
-            // =========================
-
-            if(utilisateurId == null){
-
-                response.sendRedirect(
-                        request.getContextPath()
-                                + "/login.jsp"
-                );
-
+            // Sécurité : retour erreur si non connecté
+            if (utilisateurId == null) {
+                response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
                 return;
             }
 
-            // =========================
-            // PUBLICATION
-            // =========================
+            Long publicationId = Long.parseLong(request.getParameter("publicationId"));
+            LikePublicationDAO dao = new LikePublicationDAO(em);
 
-            Long publicationId =
-                    Long.parseLong(
-                            request.getParameter(
-                                    "publicationId"
-                            )
-                    );
-
-            LikePublicationDAO dao =
-                    new LikePublicationDAO(em);
-
-            // =========================
-            // ÉVITER DOUBLE LIKE
-            // =========================
-
-            boolean existe =
-                    dao.existeDeja(
-                            publicationId,
-                            utilisateurId
-                    );
-
-            if(!existe){
-
-                dao.ajouterLike(
-                        publicationId,
-                        utilisateurId
-                );
+            // Ajout du like
+            if (!dao.existeDeja(publicationId, utilisateurId)) {
+                dao.ajouterLike(publicationId, utilisateurId);
             }
 
-            // =========================
-            // REDIRECTION
-            // =========================
+            // Calculer le nouveau total
+            int totalLikes = dao.nombreLikes(publicationId);
 
-            response.sendRedirect(
-                    request.getContextPath()
-                            + "/liste-publications"
-            );
+            // RÉPONSE JSON POUR AJAX (au lieu de sendRedirect)
+            response.setContentType("application/json");
+            response.setCharacterEncoding("UTF-8");
+            response.getWriter().write("{\"nouveauTotal\": " + totalLikes + "}");
 
         } catch (Exception e) {
-
             e.printStackTrace();
-
-            response.getWriter().println(
-                    "Erreur LIKE : "
-                            + e.getMessage()
-            );
-
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            response.getWriter().write("{\"error\": \"" + e.getMessage() + "\"}");
         }
-        // Le em.close() est retiré car il est maintenant géré globalement par votre Filtre.
+        // Pas de em.close() ici, le filtre le fera pour vous.
     }
 }

@@ -22,27 +22,21 @@ public class AuthentificationFilter implements Filter {
         String uri = request.getRequestURI().toLowerCase();
         String contextPath = request.getContextPath();
 
-        // ======================================
-        // URLS PUBLIQUES
-        // ======================================
+        // 1. Autoriser les URLs publiques (fichiers statiques, accueil, login)
         if (isPublicUrl(uri, contextPath)) {
             chain.doFilter(request, response);
             return;
         }
 
-        // ======================================
-        // VÉRIFICATION CONNEXION
-        // ======================================
-        boolean estConnecte = session != null
-                && (session.getAttribute("etudiantConnecte") != null
-                || session.getAttribute("etudiant") != null
-                || session.getAttribute("utilisateurConnecte") != null);
+        // 2. Vérification de la connexion
+        boolean estConnecte = (session != null && (
+                session.getAttribute("utilisateurConnecte") != null ||
+                        session.getAttribute("etudiantConnecte") != null
+        ));
 
-        // ======================================
-        // UTILISATEUR NON CONNECTÉ
-        // ======================================
         if (!estConnecte) {
-            if (uri.contains("etudiant")) {
+            // Si pas connecté et essaie d'accéder à une zone protégée, on redirige
+            if (uri.contains("/etudiant/")) {
                 response.sendRedirect(contextPath + "/pages/connexionEtudiant.jsp");
             } else {
                 response.sendRedirect(contextPath + "/acceuil.jsp");
@@ -50,71 +44,28 @@ public class AuthentificationFilter implements Filter {
             return;
         }
 
-        // ======================================
-        // PROTECTION ÉTUDIANT / ADMIN
-        // ======================================
-        boolean estEtudiant = session.getAttribute("etudiantConnecte") != null
-                || "ETUDIANT".equals(session.getAttribute("userType"));
-
-        if (estEtudiant && (uri.contains("/admin") || uri.contains("/bureau"))) {
-            response.sendRedirect(contextPath + "/espace-etudiant");
-            return;
+        // 3. PROTECTION DES ZONES SENSIBLES (ADMIN)
+        // Seuls les admins peuvent accéder aux routes /admin/
+        if (uri.contains("/admin/")) {
+            boolean estAdmin = session.getAttribute("utilisateurConnecte") != null;
+            if (!estAdmin) {
+                // Si un étudiant tente d'accéder à l'admin, on le renvoie vers son espace
+                response.sendRedirect(contextPath + "/espace-etudiant");
+                return;
+            }
         }
 
+        // 4. Tout est conforme, on laisse passer la requête
         chain.doFilter(request, response);
     }
 
-    // =====================================================
-    // MÉTHODE URL PUBLIQUE
-    // =====================================================
     private boolean isPublicUrl(String uri, String contextPath) {
-        uri = uri.toLowerCase();
-        return uri.endsWith("/acceuil.jsp")
-                || uri.endsWith("/accueil.jsp")
-                || uri.equals(contextPath.toLowerCase() + "/")
-                || uri.endsWith("/login")
-                || uri.endsWith("/login.jsp")
-                || uri.contains("/logoutservlet")
-                || uri.contains("/etudiant/logout")
-                || uri.contains("/etudiant/paydunya/callback")
-                || uri.contains("/etudiant/caravanes")
-                || uri.contains("?success=true")
-                || uri.contains("?cancel=true")
-                || uri.contains("/motdepasseoublie.jsp")
-                || uri.contains("/verificationcode.jsp")
-                || uri.contains("/nouveaumotdepasse.jsp")
-                || uri.contains("/verifieremailrecuperation")
-                || uri.contains("/verifiercodereset")
-                || uri.contains("/changermotdepasse")
-                || uri.contains("/motdepasseoublieetudiant.jsp")
-                || uri.contains("/verificationcodeetudiant.jsp")
-                || uri.contains("/nouveaumotdepasseetudiant.jsp")
-                || uri.contains("/etudiant/verifieremailrecuperation")
-                || uri.contains("/etudiant/verifiercodereset")
-                || uri.contains("/etudiant/changermotdepasse")
-                || uri.endsWith("/connexionetudiant.jsp")
-                || uri.endsWith("/inscriptionetudiant.jsp")
-                || uri.endsWith("/activationcompte.jsp")
-                || uri.endsWith("/creationmotdepasse.jsp")
-                || uri.contains("/etudiant/activer")
-                || uri.contains("/etudiant/valider")
-                || uri.contains("/etudiant/creer-motdepasse")
-                || uri.contains("/etudiant/connexion")
-                || uri.contains("/etudiant/inscription")
-                || uri.contains("/admin/verifier")
-                || uri.contains("/admin/verifier-code")
-                || uri.contains("/admin/activer")
-                || uri.contains("/liste-publications")
-                || uri.contains("/admin/supprimer-publication")
-                || uri.contains("/upload/ajouterpublication.jsp")
-                || uri.endsWith(".css")
-                || uri.endsWith(".js")
-                || uri.endsWith(".png")
-                || uri.endsWith(".jpg")
-                || uri.endsWith(".jpeg")
-                || uri.endsWith(".gif")
-                || uri.endsWith(".svg")
-                || uri.endsWith(".woff")
-                || uri.endsWith(".woff2");
+        return uri.endsWith(".css") || uri.endsWith(".js") || uri.endsWith(".png")
+                || uri.endsWith(".jpg") || uri.endsWith(".jpeg") || uri.endsWith(".gif")
+                || uri.endsWith("/acceuil.jsp") || uri.endsWith("/accueil.jsp")
+                || uri.endsWith("/login.jsp") || uri.endsWith("/connexionetudiant.jsp")
+                || uri.endsWith("/inscriptionetudiant.jsp") || uri.contains("/etudiant/connexion")
+                || uri.contains("/etudiant/inscription") || uri.endsWith("/")
+                || uri.contains("/liste-publications"); // Liste publications accessible à tous
     }
 }

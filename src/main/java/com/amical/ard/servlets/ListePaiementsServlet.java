@@ -20,13 +20,14 @@ public class ListePaiementsServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
+        // Le filtre gère l'ouverture et la fermeture
         EntityManager em = EntityManagerHelper.getEntityManager();
 
         try {
             PaiementLogementDAO dao = new PaiementLogementDAO(em);
             List<PaiementLogement> paiements = dao.lister();
 
-            // Log de vérification
+            // Log de vérification (Ce qui fonctionnait déjà)
             for (PaiementLogement p : paiements) {
                 if (p.getEtudiant() == null) {
                     System.out.println("❌ Étudiant manquant pour paiement ID: " + p.getId());
@@ -47,9 +48,7 @@ public class ListePaiementsServlet extends HttpServlet {
             request.setAttribute("erreur", "Erreur lors du chargement des paiements.");
             request.getRequestDispatcher("/pages/Erreur.jsp")
                     .forward(request, response);
-
-        } finally {
-            EntityManagerHelper.closeEntityManager();
         }
+        // PLUS DE finally { EntityManagerHelper.closeEntityManager(); } ici
     }
 }
