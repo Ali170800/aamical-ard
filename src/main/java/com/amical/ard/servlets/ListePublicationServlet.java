@@ -7,9 +7,10 @@ import com.amical.ard.entites.Publication;
 import com.amical.ard.entites.CommentairePublication;
 import com.amical.ard.entites.Etudiant;
 import com.amical.ard.entites.Utilisateur;
-import com.amical.ard.utils.EntityManagerHelper;
 
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityManagerFactory;
+import jakarta.persistence.Persistence;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -23,13 +24,18 @@ import java.util.List;
 @WebServlet("/liste-publications")
 public class ListePublicationServlet extends HttpServlet {
 
+    private EntityManagerFactory emf;
+
     @Override
-    protected void doGet(HttpServletRequest request,
-                         HttpServletResponse response)
+    public void init() {
+        emf = Persistence.createEntityManagerFactory("amicalePU");
+    }
+
+    @Override
+    protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        // Le filtre gère désormais l'ouverture et la fermeture de l'EntityManager
-        EntityManager em = EntityManagerHelper.getEntityManager();
+        EntityManager em = emf.createEntityManager();
 
         try {
             PublicationDAO publicationDAO = new PublicationDAO(em);
@@ -37,61 +43,59 @@ public class ListePublicationServlet extends HttpServlet {
             LikePublicationDAO likeDAO = new LikePublicationDAO(em);
 
             HttpSession session = request.getSession();
-            Utilisateur adminConnecte = (Utilisateur) session.getAttribute("utilisateurConnecte");
-
-            Integer adminId = (adminConnecte != null) ? adminConnecte.getId() : null;
+            Utilisateur utilisateurConnecte = (Utilisateur) session.getAttribute("utilisateurConnecte");
+            Integer adminId = (utilisateurConnecte != null) ? utilisateurConnecte.getId() : null;
 
             List<Publication> publications = publicationDAO.listerToutes();
 
             for (Publication publication : publications) {
-                // Auteur publication
-                String auteurPublication = publication.getAuteurPrenom() + " "
-                        + publication.getAuteurNom() + " - "
-                        + publication.getAuteurRole();
-                request.setAttribute("auteur_publication_" + publication.getId(), auteurPublication);
 
-                // Permission suppression
-                boolean peutModifier = (adminId != null && publication.getAuteurId() != null)
-                        && publication.getAuteurId().equals(adminId.longValue());
-                publication.setPeutModifier(peutModifier);
+                // 1. Auteur et Rôle
+                String nomAuteur = (publication.getAuteurPrenom() != null ? publication.getAuteurPrenom() : "") + " "
+                        + (publication.getAuteurNom() != null ? publication.getAuteurNom() : "");
+                String roleAuteur = (publication.getAuteurRole() != null) ? publication.getAuteurRole() : "Membre";
 
-                // Commentaires
+                request.setAttribute("auteur_publication_" + publication.getId(), nomAuteur);
+                request.setAttribute("role_auteur_" + publication.getId(), roleAuteur);
+
+                // 2. Permission de suppression (Vérification si auteur)
+                boolean estAuteur = (adminId != null && publication.getAuteurId() != null
+                        && publication.getAuteurId().equals(adminId.longValue()));
+                request.setAttribute("est_auteur_" + publication.getId(), estAuteur);
+
+                // 3. Commentaires
                 List<CommentairePublication> commentaires = commentaireDAO.listerParPublication(publication.getId());
                 publication.setCommentaires(commentaires);
-                request.setAttribute("commentaires_" + publication.getId(), commentaires);
 
-                // Auteurs commentaires
                 for (CommentairePublication commentaire : commentaires) {
                     String auteurNom = "Utilisateur";
                     try {
                         Long utilisateurId = commentaire.getUtilisateurId();
-                        Utilisateur utilisateur = em.find(Utilisateur.class, utilisateurId.intValue());
-                        if (utilisateur != null) {
-                            auteurNom = utilisateur.getPrenom() + " " + utilisateur.getNom();
+                        Utilisateur u = em.find(Utilisateur.class, utilisateurId.intValue());
+                        if (u != null) {
+                            auteurNom = u.getPrenom() + " " + u.getNom();
                         } else {
-                            Etudiant etudiant = em.find(Etudiant.class, utilisateurId);
-                            if (etudiant != null) {
-                                auteurNom = etudiant.getPrenom() + " " + etudiant.getNom();
-                            }
+                            Etudiant e = em.find(Etudiant.class, utilisateurId);
+                            if (e != null) auteurNom = e.getPrenom() + " " + e.getNom();
                         }
-                    } catch (Exception e) {
-                        e.printStackTrace();
-                    }
+                    } catch (Exception e) { e.printStackTrace(); }
                     request.setAttribute("auteur_commentaire_" + commentaire.getId(), auteurNom);
                 }
 
-                // Likes
-                int totalLikes = likeDAO.nombreLikes(publication.getId());
-                publication.setNombreLikes(totalLikes);
+                // 4. Likes
+                publication.setNombreLikes(likeDAO.nombreLikes(publication.getId()));
             }
 
             request.setAttribute("publications", publications);
             request.getRequestDispatcher("/pages/publications.jsp").forward(request, response);
 
-        } catch (Exception e) {
-            e.printStackTrace();
-            response.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR, "Erreur lors du chargement des publications.");
+        } finally {
+            em.close();
         }
-        // PAS DE finally { em.close(); } ou destroy() ici : le filtre s'en occupe.
+    }
+
+    @Override
+    public void destroy() {
+        if (emf != null) emf.close();
     }
 }
