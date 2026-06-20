@@ -4,8 +4,8 @@
 <%@ taglib uri="http://java.sun.com/jsp/jstl/core" prefix="c" %>
 
 <%
-List<Publication> publications = (List<Publication>) request.getAttribute("publications");
-boolean estAdmin = session.getAttribute("utilisateurConnecte") != null;
+    List<Publication> publications = (List<Publication>) request.getAttribute("publications");
+    boolean estAdmin = session.getAttribute("utilisateurConnecte") != null;
 %>
 
 <!DOCTYPE html>
@@ -24,7 +24,6 @@ boolean estAdmin = session.getAttribute("utilisateurConnecte") != null;
 <body>
 
 <div class="max-w-4xl mx-auto py-10 px-4">
-    <!-- HEADER -->
     <div class="flex justify-between items-center mb-10">
         <div>
             <h1 class="text-4xl font-black text-gray-800">Fil communautaire AERD</h1>
@@ -38,7 +37,6 @@ boolean estAdmin = session.getAttribute("utilisateurConnecte") != null;
         <% } %>
     </div>
 
-    <!-- LISTE DES PUBLICATIONS -->
     <% if (publications != null && !publications.isEmpty()) { %>
         <% for (Publication publication : publications) { %>
             <div class="publication-card bg-white rounded-3xl shadow-lg overflow-hidden mb-10">
@@ -62,17 +60,20 @@ boolean estAdmin = session.getAttribute("utilisateurConnecte") != null;
                         </c:if>
                     </div>
 
-                    <!-- ACTIONS -->
                     <div class="flex items-center gap-6 mt-6">
-                        <button onclick="likerPublication(<%= publication.getId() %>)"
+                        <button id="like-btn-<%= publication.getId() %>"
+                                onclick="likerPublication(<%= publication.getId() %>)"
                                 class="flex items-center gap-2 text-blue-600 hover:text-blue-800 font-semibold transition">
-                            <i class="fas fa-thumbs-up"></i> J’aime
+                            <i class="fas fa-thumbs-up"></i> <span>J’aime</span>
                         </button>
+
                         <button onclick="ajouterCommentaire(<%= publication.getId() %>)"
                                 class="flex items-center gap-2 text-green-600 hover:text-green-800 font-semibold transition">
-                            <i class="fas fa-comment"></i> Commentaires
+                            <i class="fas fa-comment"></i> <span>Commenter</span>
                         </button>
                     </div>
+
+                    <div id="zone-commentaires-<%= publication.getId() %>" class="mt-4 space-y-2"></div>
                 </div>
             </div>
         <% } %>
@@ -86,34 +87,36 @@ boolean estAdmin = session.getAttribute("utilisateurConnecte") != null;
 
 <script>
     function likerPublication(pubId) {
+        // UI Optimiste
+        const btn = document.getElementById('like-btn-' + pubId);
+        btn.classList.replace('text-blue-600', 'text-blue-900');
+        btn.innerHTML = '<i class="fas fa-thumbs-up"></i> <span>Liké</span>';
+
+        // Appel silencieux en arrière-plan
         fetch('<%= request.getContextPath() %>/like-publication', {
             method: 'POST',
             headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
             body: 'publicationId=' + pubId
-        })
-        .then(response => {
-            if (response.ok) {
-                alert("Publication likée !");
-            } else {
-                alert("Erreur lors du like.");
-            }
         });
     }
 
     function ajouterCommentaire(pubId) {
         const texte = prompt("Votre commentaire :");
         if (texte && texte.trim() !== "") {
+            // UI Optimiste : Ajout immédiat sans attendre le serveur
+            const zone = document.getElementById('zone-commentaires-' + pubId);
+            const nouveau = document.createElement('div');
+            nouveau.className = "bg-gray-100 p-3 rounded-xl text-sm text-gray-700 animate-pulse";
+            nouveau.innerText = texte;
+            zone.appendChild(nouveau);
+
+            // Appel silencieux en arrière-plan
             fetch('<%= request.getContextPath() %>/etudiant/commenter-publication', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: 'publicationId=' + pubId + '&commentaire=' + encodeURIComponent(texte)
-            })
-            .then(response => {
-                if (response.ok) {
-                    alert("Commentaire publié !");
-                } else {
-                    alert("Erreur lors de la publication.");
-                }
+            }).then(() => {
+                nouveau.classList.remove('animate-pulse');
             });
         }
     }
