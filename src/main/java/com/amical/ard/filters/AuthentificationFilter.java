@@ -23,7 +23,7 @@ public class AuthentificationFilter implements Filter {
         String contextPath = request.getContextPath();
 
         // ======================================
-        // URLS PUBLIQUES (Passage direct)
+        // URLS PUBLIQUES
         // ======================================
         if (isPublicUrl(uri, contextPath)) {
             chain.doFilter(request, response);
@@ -38,6 +38,9 @@ public class AuthentificationFilter implements Filter {
                 || session.getAttribute("etudiant") != null
                 || session.getAttribute("utilisateurConnecte") != null);
 
+        // ======================================
+        // UTILISATEUR NON CONNECTÉ
+        // ======================================
         if (!estConnecte) {
             if (uri.contains("etudiant")) {
                 response.sendRedirect(contextPath + "/pages/connexionEtudiant.jsp");
@@ -61,6 +64,9 @@ public class AuthentificationFilter implements Filter {
         chain.doFilter(request, response);
     }
 
+    // =====================================================
+    // MÉTHODE URL PUBLIQUE
+    // =====================================================
     private boolean isPublicUrl(String uri, String contextPath) {
         uri = uri.toLowerCase();
         return uri.endsWith("/acceuil.jsp")
@@ -74,10 +80,6 @@ public class AuthentificationFilter implements Filter {
                 || uri.contains("/etudiant/caravanes")
                 || uri.contains("?success=true")
                 || uri.contains("?cancel=true")
-                // --- AJOUT DES URLS AJAX POUR ÉVITER LA REDIRECTION ---
-                || uri.contains("/like-publication")
-                || uri.contains("/etudiant/commenter-publication")
-                // -------------------------------------------------------
                 || uri.contains("/motdepasseoublie.jsp")
                 || uri.contains("/verificationcode.jsp")
                 || uri.contains("/nouveaumotdepasse.jsp")

@@ -4,6 +4,7 @@ import com.amical.ard.dao.LikePublicationDAO;
 import com.amical.ard.entites.Utilisateur;
 import com.amical.ard.entites.Etudiant;
 import com.amical.ard.utils.EntityManagerHelper;
+
 import jakarta.persistence.EntityManager;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -11,52 +12,126 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+
 import java.io.IOException;
 
 @WebServlet("/like-publication")
 public class LikePublicationServlet extends HttpServlet {
 
     @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+    protected void doPost(HttpServletRequest request,
+                          HttpServletResponse response)
+            throws ServletException, IOException {
+
         EntityManager em = EntityManagerHelper.getEntityManager();
 
         try {
-            HttpSession session = request.getSession(false);
+
+            HttpSession session =
+                    request.getSession(false);
+
             Long utilisateurId = null;
 
-            // Récupération de l'utilisateur (Admin ou Etudiant)
-            Utilisateur admin = (session != null) ? (Utilisateur) session.getAttribute("utilisateurConnecte") : null;
-            if (admin != null) {
-                utilisateurId = admin.getId().longValue();
-            } else {
-                Etudiant etudiant = (session != null) ? (Etudiant) session.getAttribute("etudiantConnecte") : null;
-                if (etudiant != null) {
-                    utilisateurId = etudiant.getId();
+            // =========================
+            // ADMIN CONNECTÉ
+            // =========================
+
+            Utilisateur admin =
+                    (Utilisateur)
+                            session.getAttribute(
+                                    "utilisateurConnecte"
+                            );
+
+            if(admin != null){
+
+                utilisateurId =
+                        admin.getId().longValue();
+            }
+
+            // =========================
+            // ETUDIANT CONNECTÉ
+            // =========================
+
+            if(utilisateurId == null){
+
+                Etudiant etudiant =
+                        (Etudiant)
+                                session.getAttribute(
+                                        "etudiantConnecte"
+                                );
+
+                if(etudiant != null){
+
+                    utilisateurId =
+                            etudiant.getId();
                 }
             }
 
-            if (utilisateurId == null) {
-                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                response.getWriter().write("{\"status\": \"error\", \"message\": \"Non connecté\"}");
+            // =========================
+            // SÉCURITÉ
+            // =========================
+
+            if(utilisateurId == null){
+
+                response.sendRedirect(
+                        request.getContextPath()
+                                + "/login.jsp"
+                );
+
                 return;
             }
 
-            Long publicationId = Long.parseLong(request.getParameter("publicationId"));
-            LikePublicationDAO dao = new LikePublicationDAO(em);
+            // =========================
+            // PUBLICATION
+            // =========================
 
-            if (!dao.existeDeja(publicationId, utilisateurId)) {
-                dao.ajouterLike(publicationId, utilisateurId);
+            Long publicationId =
+                    Long.parseLong(
+                            request.getParameter(
+                                    "publicationId"
+                            )
+                    );
+
+            LikePublicationDAO dao =
+                    new LikePublicationDAO(em);
+
+            // =========================
+            // ÉVITER DOUBLE LIKE
+            // =========================
+
+            boolean existe =
+                    dao.existeDeja(
+                            publicationId,
+                            utilisateurId
+                    );
+
+            if(!existe){
+
+                dao.ajouterLike(
+                        publicationId,
+                        utilisateurId
+                );
             }
 
-            // Réponse JSON silencieuse : le navigateur ne change pas de page
-            response.setContentType("application/json");
-            response.setCharacterEncoding("UTF-8");
-            response.getWriter().write("{\"status\": \"success\"}");
+            // =========================
+            // REDIRECTION
+            // =========================
+
+            response.sendRedirect(
+                    request.getContextPath()
+                            + "/liste-publications"
+            );
 
         } catch (Exception e) {
+
             e.printStackTrace();
-            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-            response.getWriter().write("{\"status\": \"error\", \"message\": \"" + e.getMessage() + "\"}");
+
+            response.getWriter().println(
+                    "Erreur LIKE : "
+                            + e.getMessage()
+            );
+
         }
+        // Le em.close() est retiré car il est maintenant géré globalement par votre Filtre.
     }
 }

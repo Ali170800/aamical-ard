@@ -1,3 +1,4 @@
+
 package com.amical.ard.servlets;
 
 import com.amical.ard.dao.PublicationDAO;
@@ -9,8 +10,9 @@ import com.amical.ard.entites.CommentairePublication;
 import com.amical.ard.entites.Etudiant;
 import com.amical.ard.entites.Utilisateur;
 
-import com.amical.ard.utils.EntityManagerHelper;
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityManagerFactory;
+import jakarta.persistence.Persistence;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -26,12 +28,24 @@ import java.util.List;
 @WebServlet("/liste-publications")
 public class ListePublicationServlet extends HttpServlet {
 
+    private EntityManagerFactory emf;
+
+    @Override
+    public void init() {
+
+        emf =
+                Persistence.createEntityManagerFactory(
+                        "amicalePU"
+                );
+    }
+
     @Override
     protected void doGet(HttpServletRequest request,
                          HttpServletResponse response)
             throws ServletException, IOException {
 
-        EntityManager em = EntityManagerHelper.getEntityManager();
+        EntityManager em =
+                emf.createEntityManager();
 
         try {
 
@@ -215,10 +229,19 @@ public class ListePublicationServlet extends HttpServlet {
                     "/pages/publications.jsp"
             ).forward(request, response);
 
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new ServletException(e);
+        } finally {
+
+            em.close();
         }
-        // finally { em.close(); } supprimé : géré par le Filtre
+    }
+
+    @Override
+    public void destroy() {
+
+        if (emf != null) {
+
+            emf.close();
+        }
     }
 }
+
