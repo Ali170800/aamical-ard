@@ -36,9 +36,8 @@ public class CommentairePublicationServlet extends HttpServlet {
             commentaire.setCommentaire(texte);
             commentaire.setDateCommentaire(LocalDateTime.now());
 
-            em.getTransaction().begin();
+            // OPTION 1 : Gestion déléguée au DAO (Suppression des em.getTransaction().begin/commit)
             new CommentairePublicationDAO(em).ajouter(commentaire);
-            em.getTransaction().commit();
 
             // RÉPONSE JSON CORRECTE
             response.setContentType("application/json; charset=UTF-8");
@@ -51,8 +50,9 @@ public class CommentairePublicationServlet extends HttpServlet {
             response.getWriter().write(jsonResponse);
 
         } catch (Exception e) {
+            // Rollback seulement si une transaction a été ouverte accidentellement ailleurs
             if (em.getTransaction().isActive()) em.getTransaction().rollback();
-            e.printStackTrace(); // Utile pour voir l'erreur dans la console Tomcat
+            e.printStackTrace();
             response.sendError(500);
         } finally {
             em.close();
