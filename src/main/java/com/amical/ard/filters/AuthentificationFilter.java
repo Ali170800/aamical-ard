@@ -77,7 +77,7 @@ public class AuthentificationFilter implements Filter {
                 || uri.contains("/etudiant/logout")
                 || uri.contains("/etudiant/paydunya/callback")
                 || uri.contains("/etudiant/caravanes")
-                || uri.contains("/etudiant/commenter-publication") // <-- DÉBLOQUE L'AJAX
+
                 || uri.contains("?success=true")
                 || uri.contains("?cancel=true")
                 || uri.contains("/motdepasseoublie.jsp")

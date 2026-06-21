@@ -4,7 +4,6 @@ import com.amical.ard.dao.LikePublicationDAO;
 import com.amical.ard.entites.Utilisateur;
 import com.amical.ard.entites.Etudiant;
 import com.amical.ard.utils.EntityManagerHelper;
-import jakarta.persistence.EntityManager;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
@@ -17,31 +16,31 @@ public class LikePublicationServlet extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        EntityManager em = EntityManagerHelper.getEntityManager();
+        HttpSession session = request.getSession(false);
+        Long utilisateurId = null;
+
+        // Identification de l'utilisateur
+        Utilisateur admin = (session != null) ? (Utilisateur) session.getAttribute("utilisateurConnecte") : null;
+        if (admin != null) {
+            utilisateurId = admin.getId().longValue();
+        } else {
+            Etudiant etudiant = (session != null) ? (Etudiant) session.getAttribute("etudiantConnecte") : null;
+            if (etudiant != null) {
+                utilisateurId = etudiant.getId();
+            }
+        }
+
+        if (utilisateurId == null) {
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
+            return;
+        }
 
         try {
-            HttpSession session = request.getSession(false);
-            Long utilisateurId = null;
-
-            Utilisateur admin = (session != null) ? (Utilisateur) session.getAttribute("utilisateurConnecte") : null;
-            if (admin != null) {
-                utilisateurId = admin.getId().longValue();
-            } else {
-                Etudiant etudiant = (session != null) ? (Etudiant) session.getAttribute("etudiantConnecte") : null;
-                if (etudiant != null) {
-                    utilisateurId = etudiant.getId();
-                }
-            }
-
-            if (utilisateurId == null) {
-                response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
-                return;
-            }
-
             Long publicationId = Long.parseLong(request.getParameter("publicationId"));
-            LikePublicationDAO dao = new LikePublicationDAO(em);
 
-            // 1. Pas de begin()/commit() ici
+            // Le filtre a déjà ouvert la transaction et l'EntityManager
+            LikePublicationDAO dao = new LikePublicationDAO(EntityManagerHelper.getEntityManager());
+
             if (!dao.existeDeja(publicationId, utilisateurId)) {
                 dao.ajouterLike(publicationId, utilisateurId);
             }
@@ -52,10 +51,11 @@ public class LikePublicationServlet extends HttpServlet {
             response.setCharacterEncoding("UTF-8");
             response.getWriter().write("{\"nouveauTotal\": " + totalLikes + "}");
 
+            // AUCUN em.close() ici : le filtre gérera la fermeture dans son 'finally'
+
         } catch (Exception e) {
-            e.printStackTrace();
-            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-            response.getWriter().write("{\"error\": \"Erreur technique\"}");
+            // En cas d'erreur, le filtre effectuera le rollback automatiquement
+            throw new ServletException("Erreur lors du traitement du Like", e);
         }
     }
 }

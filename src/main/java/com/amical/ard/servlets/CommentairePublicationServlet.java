@@ -6,11 +6,8 @@ import com.amical.ard.entites.Utilisateur;
 import com.amical.ard.entites.Etudiant;
 import com.amical.ard.utils.EntityManagerHelper;
 
-import jakarta.persistence.EntityManager;
-
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
-
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -23,135 +20,54 @@ import java.time.LocalDateTime;
 public class CommentairePublicationServlet extends HttpServlet {
 
     @Override
-    protected void doPost(HttpServletRequest request,
-                          HttpServletResponse response)
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        EntityManager em =
-                EntityManagerHelper.getEntityManager();
+        HttpSession session = request.getSession(false);
+        Long utilisateurId = null;
 
+        // --- Logique d'authentification ---
+        Utilisateur admin = (Utilisateur) session.getAttribute("utilisateurConnecte");
+        if (admin != null) {
+            utilisateurId = admin.getId().longValue();
+        } else {
+            Etudiant etudiant = (Etudiant) session.getAttribute("etudiantConnecte");
+            if (etudiant != null) {
+                utilisateurId = etudiant.getId();
+            }
+        }
+
+        if (utilisateurId == null) {
+            response.sendRedirect(request.getContextPath() + "/pages/connexionEtudiant.jsp");
+            return;
+        }
+
+        // --- Logique métier ---
         try {
+            Long publicationId = Long.parseLong(request.getParameter("publicationId"));
+            String texte = request.getParameter("commentaire");
 
-            HttpSession session =
-                    request.getSession(false);
-
-            Long utilisateurId = null;
-
-            // =========================
-            // ADMIN CONNECTÉ
-            // =========================
-
-            Utilisateur admin =
-                    (Utilisateur)
-                            session.getAttribute(
-                                    "utilisateurConnecte"
-                            );
-
-            if (admin != null) {
-
-                utilisateurId =
-                        admin.getId().longValue();
-            }
-
-            // =========================
-            // ETUDIANT CONNECTÉ
-            // =========================
-
-            if (utilisateurId == null) {
-
-                Etudiant etudiant =
-                        (Etudiant)
-                                session.getAttribute(
-                                        "etudiantConnecte"
-                                );
-
-                if (etudiant != null) {
-
-                    utilisateurId =
-                            etudiant.getId();
-                }
-            }
-
-            // =========================
-            // SÉCURITÉ
-            // =========================
-
-            if (utilisateurId == null) {
-
-                response.sendRedirect(
-                        request.getContextPath()
-                                + "/login.jsp"
-                );
-
+            if (texte == null || texte.trim().isEmpty()) {
+                response.sendRedirect(request.getContextPath() + "/liste-publications");
                 return;
             }
 
-            // =========================
-            // DONNÉES
-            // =========================
+            CommentairePublication commentaire = new CommentairePublication();
+            commentaire.setPublicationId(publicationId);
+            commentaire.setUtilisateurId(utilisateurId);
+            commentaire.setCommentaire(texte.trim());
+            commentaire.setDateCommentaire(LocalDateTime.now());
 
-            Long publicationId =
-                    Long.parseLong(
-                            request.getParameter(
-                                    "publicationId"
-                            )
-                    );
-
-            String texte =
-                    request.getParameter(
-                            "commentaire"
-                    );
-
-            // =========================
-            // COMMENTAIRE
-            // =========================
-
-            CommentairePublication commentaire =
-                    new CommentairePublication();
-
-            commentaire.setPublicationId(
-                    publicationId
-            );
-
-            commentaire.setUtilisateurId(
-                    utilisateurId
-            );
-
-            commentaire.setCommentaire(
-                    texte
-            );
-
-            commentaire.setDateCommentaire(
-                    LocalDateTime.now()
-            );
-
-            // =========================
-            // SAUVEGARDE
-            // =========================
-
-            CommentairePublicationDAO dao =
-                    new CommentairePublicationDAO(em);
-
+            // On récupère l'EntityManager déjà actif grâce au Filtre
+            CommentairePublicationDAO dao = new CommentairePublicationDAO(EntityManagerHelper.getEntityManager());
             dao.ajouter(commentaire);
 
-            // =========================
-            // REDIRECTION
-            // =========================
-
-            response.sendRedirect(
-                    request.getContextPath()
-                            + "/liste-publications"
-            );
+            response.sendRedirect(request.getContextPath() + "/liste-publications");
 
         } catch (Exception e) {
-
-            e.printStackTrace();
-
-            response.getWriter().println(
-                    "Erreur COMMENTAIRE : "
-                            + e.getMessage()
-            );
-
+            // Si une erreur survient, le Filtre fera le rollback automatiquement
+            throw new ServletException("Erreur lors de l'ajout du commentaire", e);
         }
+        // PAS DE finally { em.close() } ici ! Le filtre s'en occupe.
     }
 }
