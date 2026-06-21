@@ -1,58 +1,247 @@
+
 package com.amical.ard.servlets;
 
-import com.amical.ard.dao.*;
-import com.amical.ard.entites.*;
-import com.amical.ard.utils.EntityManagerHelper; // Assurez-vous d'utiliser votre helper
+import com.amical.ard.dao.PublicationDAO;
+import com.amical.ard.dao.CommentairePublicationDAO;
+import com.amical.ard.dao.LikePublicationDAO;
+
+import com.amical.ard.entites.Publication;
+import com.amical.ard.entites.CommentairePublication;
+import com.amical.ard.entites.Etudiant;
+import com.amical.ard.entites.Utilisateur;
+
 import jakarta.persistence.EntityManager;
+import jakarta.persistence.EntityManagerFactory;
+import jakarta.persistence.Persistence;
+
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
-import jakarta.servlet.http.*;
+
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
+
 import java.io.IOException;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 @WebServlet("/liste-publications")
 public class ListePublicationServlet extends HttpServlet {
 
+    private EntityManagerFactory emf;
+
     @Override
-    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        EntityManager em = EntityManagerHelper.getEntityManager();
+    public void init() {
+
+        emf =
+                Persistence.createEntityManagerFactory(
+                        "amicalePU"
+                );
+    }
+
+    @Override
+    protected void doGet(HttpServletRequest request,
+                         HttpServletResponse response)
+            throws ServletException, IOException {
+
+        EntityManager em =
+                emf.createEntityManager();
+
         try {
-            PublicationDAO pubDAO = new PublicationDAO(em);
-            CommentairePublicationDAO comDAO = new CommentairePublicationDAO(em);
-            LikePublicationDAO likeDAO = new LikePublicationDAO(em);
 
-            List<Publication> publications = pubDAO.listerToutes();
-            DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+            PublicationDAO publicationDAO =
+                    new PublicationDAO(em);
 
-            for (Publication p : publications) {
-                // Info Publication
-                request.setAttribute("auteur_publication_" + p.getId(), p.getAuteurPrenom() + " " + p.getAuteurNom());
-                request.setAttribute("role_auteur_" + p.getId(), p.getAuteurRole() != null ? p.getAuteurRole() : "MEMBRE");
-                request.setAttribute("date_publication_" + p.getId(), (p.getDatePublication() != null) ? p.getDatePublication().format(dtf) : "Date inconnue");
+            CommentairePublicationDAO commentaireDAO =
+                    new CommentairePublicationDAO(em);
 
-                // Récupération des commentaires
-                List<CommentairePublication> coms = comDAO.listerParPublication(p.getId());
-                p.setCommentaires(coms);
+            LikePublicationDAO likeDAO =
+                    new LikePublicationDAO(em);
 
-                for(CommentairePublication c : coms) {
-                    // Chercher l'utilisateur ou l'étudiant pour chaque commentaire
-                    Etudiant etudiant = em.find(Etudiant.class, c.getUtilisateurId());
-                    Utilisateur admin = em.find(Utilisateur.class, c.getUtilisateurId());
+            HttpSession session =
+                    request.getSession();
 
-                    String nomComplet = "Inconnu";
-                    if (etudiant != null) {
-                        nomComplet = etudiant.getPrenom() + " " + etudiant.getNom();
-                    } else if (admin != null) {
-                        nomComplet = admin.getPrenom() + " " + admin.getNom();
-                    }
-                    request.setAttribute("auteur_commentaire_" + c.getId(), nomComplet);
-                }
-                p.setNombreLikes(likeDAO.nombreLikes(p.getId()));
+            Utilisateur adminConnecte =
+                    (Utilisateur)
+                            session.getAttribute(
+                                    "utilisateurConnecte"
+                            );
+
+            Integer adminId = null;
+
+            if(adminConnecte != null){
+
+                adminId =
+                        adminConnecte.getId();
             }
 
-            request.setAttribute("publications", publications);
-            request.getRequestDispatcher("/pages/publications.jsp").forward(request, response);
-        } finally { em.close(); }
+            // =========================
+            // PUBLICATIONS
+            // =========================
+
+            List<Publication> publications =
+                    publicationDAO.listerToutes();
+
+            for (Publication publication : publications) {
+
+                // =========================
+                // AUTEUR PUBLICATION
+                // =========================
+
+                String auteurPublication =
+                        publication.getAuteurPrenom()
+                                + " "
+                                + publication.getAuteurNom()
+                                + " - "
+                                + publication.getAuteurRole();
+
+                request.setAttribute(
+                        "auteur_publication_" +
+                                publication.getId(),
+                        auteurPublication
+                );
+
+                // =========================
+                // PERMISSION SUPPRESSION
+                // =========================
+
+                boolean peutModifier = false;
+
+                if(adminId != null
+                        &&
+                        publication.getAuteurId() != null){
+
+                    peutModifier =
+                            publication.getAuteurId()
+                                    .equals(
+                                            adminId.longValue()
+                                    );
+                }
+
+                publication.setPeutModifier(
+                        peutModifier
+                );
+
+                // =========================
+                // COMMENTAIRES
+                // =========================
+
+                List<CommentairePublication> commentaires =
+                        commentaireDAO.listerParPublication(
+                                publication.getId()
+                        );
+
+                publication.setCommentaires(
+                        commentaires
+                );
+
+                request.setAttribute(
+                        "commentaires_" +
+                                publication.getId(),
+                        commentaires
+                );
+
+                // =========================
+                // AUTEURS COMMENTAIRES
+                // =========================
+
+                for (CommentairePublication commentaire
+                        : commentaires) {
+
+                    String auteurNom =
+                            "Utilisateur";
+
+                    try {
+
+                        Long utilisateurId =
+                                commentaire.getUtilisateurId();
+
+                        // ======================
+                        // CHERCHER ADMIN
+                        // ======================
+
+                        Utilisateur utilisateur =
+                                em.find(
+                                        Utilisateur.class,
+                                        utilisateurId.intValue()
+                                );
+
+                        if(utilisateur != null){
+
+                            auteurNom =
+                                    utilisateur.getPrenom()
+                                            + " "
+                                            + utilisateur.getNom();
+
+                        } else {
+
+                            // ======================
+                            // CHERCHER ETUDIANT
+                            // ======================
+
+                            Etudiant etudiant =
+                                    em.find(
+                                            Etudiant.class,
+                                            utilisateurId
+                                    );
+
+                            if(etudiant != null){
+
+                                auteurNom =
+                                        etudiant.getPrenom()
+                                                + " "
+                                                + etudiant.getNom();
+                            }
+                        }
+
+                    } catch (Exception e) {
+
+                        e.printStackTrace();
+                    }
+
+                    request.setAttribute(
+                            "auteur_commentaire_" +
+                                    commentaire.getId(),
+                            auteurNom
+                    );
+                }
+
+                // =========================
+                // LIKES
+                // =========================
+
+                int totalLikes =
+                        likeDAO.nombreLikes(
+                                publication.getId()
+                        );
+
+                publication.setNombreLikes(
+                        totalLikes
+                );
+            }
+
+            request.setAttribute(
+                    "publications",
+                    publications
+            );
+
+            request.getRequestDispatcher(
+                    "/pages/publications.jsp"
+            ).forward(request, response);
+
+        } finally {
+
+            em.close();
+        }
+    }
+
+    @Override
+    public void destroy() {
+
+        if (emf != null) {
+
+            emf.close();
+        }
     }
 }
+
