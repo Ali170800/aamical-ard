@@ -23,7 +23,7 @@ public class AuthentificationFilter implements Filter {
         String contextPath = request.getContextPath();
 
         // ======================================
-        // URLS PUBLIQUES
+        // URLS PUBLIQUES (Autorise le passage)
         // ======================================
         if (isPublicUrl(uri, contextPath)) {
             chain.doFilter(request, response);
@@ -64,20 +64,20 @@ public class AuthentificationFilter implements Filter {
         chain.doFilter(request, response);
     }
 
-    // =====================================================
-    // MÉTHODE URL PUBLIQUE
-    // =====================================================
     private boolean isPublicUrl(String uri, String contextPath) {
         uri = uri.toLowerCase();
+        String cp = contextPath.toLowerCase();
+
         return uri.endsWith("/acceuil.jsp")
                 || uri.endsWith("/accueil.jsp")
-                || uri.equals(contextPath.toLowerCase() + "/")
+                || uri.equals(cp + "/")
                 || uri.endsWith("/login")
                 || uri.endsWith("/login.jsp")
                 || uri.contains("/logoutservlet")
                 || uri.contains("/etudiant/logout")
                 || uri.contains("/etudiant/paydunya/callback")
                 || uri.contains("/etudiant/caravanes")
+                || uri.contains("/etudiant/commenter-publication") // <-- DÉBLOQUE L'AJAX
                 || uri.contains("?success=true")
                 || uri.contains("?cancel=true")
                 || uri.contains("/motdepasseoublie.jsp")
