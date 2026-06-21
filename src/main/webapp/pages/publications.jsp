@@ -5,7 +5,12 @@
     List<Publication> publications = (List<Publication>) request.getAttribute("publications");
     DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
+    // Récupération des deux types de profils possibles
     Utilisateur user = (Utilisateur) session.getAttribute("utilisateurConnecte");
+    Etudiant etudiant = (Etudiant) session.getAttribute("etudiantConnecte");
+
+    // Le bouton ne sera visible que si l'utilisateur connecté est un Admin (Utilisateur)
+    boolean peutAjouter = (user != null);
 %>
 
 <!DOCTYPE html>
@@ -24,10 +29,13 @@
     <div class="flex justify-between items-center mb-8">
         <h1 class="text-3xl font-bold text-gray-800">Fil d'actualité</h1>
 
-        <a href="<%= request.getContextPath() %>/upload/ajouterPublication.jsp"
-           class="bg-blue-600 text-white px-6 py-2 rounded-xl font-bold hover:bg-blue-700 shadow-lg transition">
-            + Ajouter publication
-        </a>
+        <%-- ✅ Condition : Seul l'Admin (utilisateurConnecte) voit ce bouton --%>
+        <% if (peutAjouter) { %>
+            <a href="<%= request.getContextPath() %>/upload/ajouterPublication.jsp"
+               class="bg-blue-600 text-white px-6 py-2 rounded-xl font-bold hover:bg-blue-700 shadow-lg transition">
+                + Ajouter publication
+            </a>
+        <% } %>
     </div>
 
     <% if (publications != null && !publications.isEmpty()) { %>
@@ -38,7 +46,6 @@
             String role = (String) request.getAttribute("role_auteur_" + p.getId());
             String datePub = (String) request.getAttribute("date_publication_" + p.getId());
 
-            // ✅ ON UTILISE MAINTENANT LA BONNE MÉTHODE
             Long auteurId = p.getAuteurId();
         %>
 
@@ -72,7 +79,6 @@
                         </div>
                     </div>
 
-                    <%-- ✅ BOUTON SUPPRIMER UNIQUEMENT POUR L'AUTEUR --%>
                     <%
                         if (user != null && auteurId != null && user.getId().longValue() == auteurId.longValue()) {
                     %>
