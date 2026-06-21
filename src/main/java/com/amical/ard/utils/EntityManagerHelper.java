@@ -13,8 +13,8 @@ public class EntityManagerHelper {
     private static volatile EntityManagerFactory emf;
     private static final ThreadLocal<EntityManager> threadLocal = new ThreadLocal<>();
 
-    // Initialisation sécurisée (Lazy Loading)
-    private static EntityManagerFactory getEmf() {
+    // Initialisation sécurisée (Lazy Loading) - Remplace JpaUtil
+    public static EntityManagerFactory getEntityManagerFactory() {
         if (emf == null || !emf.isOpen()) {
             synchronized (EntityManagerHelper.class) {
                 if (emf == null || !emf.isOpen()) {
@@ -22,8 +22,8 @@ public class EntityManagerHelper {
                         logger.info("🔄 Initialisation de l'EntityManagerFactory...");
                         emf = Persistence.createEntityManagerFactory(PERSISTENCE_UNIT);
                     } catch (Exception e) {
-                        logger.log(Level.SEVERE, "⛔ Échec de création de l'EntityManagerFactory", e);
-                        throw new RuntimeException("Erreur critique JPA: vérifiez persistence.xml", e);
+                        logger.log(Level.SEVERE, "⛔ Échec critique de création de l'EntityManagerFactory", e);
+                        throw new RuntimeException("Erreur critique JPA: vérifiez persistence.xml et vos variables d'environnement.", e);
                     }
                 }
             }
@@ -34,27 +34,10 @@ public class EntityManagerHelper {
     public static EntityManager getEntityManager() {
         EntityManager em = threadLocal.get();
         if (em == null || !em.isOpen()) {
-            em = getEmf().createEntityManager();
+            em = getEntityManagerFactory().createEntityManager();
             threadLocal.set(em);
-            logger.fine("📘 Nouvel EntityManager créé");
         }
         return em;
-    }
-
-    public static void closeEntityManager() {
-        EntityManager em = threadLocal.get();
-        if (em != null) {
-            try {
-                if (em.isOpen()) {
-                    if (em.getTransaction().isActive()) {
-                        em.getTransaction().rollback();
-                    }
-                    em.close();
-                }
-            } finally {
-                threadLocal.remove();
-            }
-        }
     }
 
     public static void beginTransaction() {
@@ -75,6 +58,16 @@ public class EntityManagerHelper {
         EntityManager em = getEntityManager();
         if (em.getTransaction().isActive()) {
             em.getTransaction().rollback();
+        }
+    }
+
+    public static void closeEntityManager() {
+        EntityManager em = threadLocal.get();
+        if (em != null) {
+            if (em.isOpen()) {
+                em.close();
+            }
+            threadLocal.remove();
         }
     }
 
