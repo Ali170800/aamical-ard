@@ -5,15 +5,10 @@ import com.amical.ard.entites.CommentairePublication;
 import com.amical.ard.entites.Utilisateur;
 import com.amical.ard.entites.Etudiant;
 import com.amical.ard.utils.EntityManagerHelper;
-
 import jakarta.persistence.EntityManager;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
-import jakarta.servlet.http.HttpServlet;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
-
+import jakarta.servlet.http.*;
 import java.io.IOException;
 import java.time.LocalDateTime;
 
@@ -24,7 +19,9 @@ public class CommentairePublicationServlet extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        // Récupération de l'EntityManager géré par le filtre (ThreadLocal)
+        // 1. Indispensable pour les émojis
+        request.setCharacterEncoding("UTF-8");
+
         EntityManager em = EntityManagerHelper.getEntityManager();
 
         try {
@@ -35,13 +32,10 @@ public class CommentairePublicationServlet extends HttpServlet {
             }
 
             Long utilisateurId = null;
-
-            // Tentative de récupération Admin
             Utilisateur admin = (Utilisateur) session.getAttribute("utilisateurConnecte");
             if (admin != null) {
                 utilisateurId = admin.getId().longValue();
             } else {
-                // Tentative de récupération Etudiant
                 Etudiant etudiant = (Etudiant) session.getAttribute("etudiantConnecte");
                 if (etudiant != null) {
                     utilisateurId = etudiant.getId();
@@ -61,34 +55,21 @@ public class CommentairePublicationServlet extends HttpServlet {
                 return;
             }
 
-            Long publicationId = Long.parseLong(pubIdParam);
-
-            // Création du commentaire
             CommentairePublication commentaire = new CommentairePublication();
-            commentaire.setPublicationId(publicationId);
+            commentaire.setPublicationId(Long.parseLong(pubIdParam));
             commentaire.setUtilisateurId(utilisateurId);
             commentaire.setCommentaire(texte);
             commentaire.setDateCommentaire(LocalDateTime.now());
 
-            // Sauvegarde via le DAO
+            // 2. Pas de begin()/commit() ici, le filtre le fait déjà
             CommentairePublicationDAO dao = new CommentairePublicationDAO(em);
-
-            // Note: Assurez-vous que votre dao.ajouter() utilise em.persist()
-            // et que la transaction est gérée par le filtre ou ici par em.getTransaction()
-            em.getTransaction().begin();
             dao.ajouter(commentaire);
-            em.getTransaction().commit();
 
             response.sendRedirect(request.getContextPath() + "/liste-publications");
 
         } catch (Exception e) {
-            // Rollback en cas d'erreur si une transaction est active
-            if (em.getTransaction().isActive()) {
-                em.getTransaction().rollback();
-            }
             e.printStackTrace();
             response.getWriter().println("Erreur COMMENTAIRE : " + e.getMessage());
         }
-        // PAS DE em.close() ! Le filtre s'en occupe.
     }
 }
