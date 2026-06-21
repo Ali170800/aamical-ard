@@ -40,16 +40,22 @@ public class CommentairePublicationServlet extends HttpServlet {
             new CommentairePublicationDAO(em).ajouter(commentaire);
             em.getTransaction().commit();
 
-            // Réponse JSON pour le front-end
-            response.setContentType("application/json");
-            response.getWriter().write(String.format(
+            // RÉPONSE JSON CORRECTE
+            response.setContentType("application/json; charset=UTF-8");
+            String jsonResponse = String.format(
                     "{\"auteur\": \"%s\", \"texte\": \"%s\", \"date\": \"%s\"}",
-                    auteurNom, texte.replace("\"", "\\\""), LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm"))
-            ));
+                    auteurNom.replace("\"", "\\\""),
+                    texte.replace("\"", "\\\""),
+                    LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))
+            );
+            response.getWriter().write(jsonResponse);
 
         } catch (Exception e) {
             if (em.getTransaction().isActive()) em.getTransaction().rollback();
+            e.printStackTrace(); // Utile pour voir l'erreur dans la console Tomcat
             response.sendError(500);
+        } finally {
+            em.close();
         }
     }
 }
