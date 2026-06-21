@@ -1,157 +1,110 @@
-package com.amical.ard.servlets;
+<%@ page contentType="text/html;charset=UTF-8" %>
+<%@ page import="java.util.*, com.amical.ard.entites.*, java.time.format.DateTimeFormatter" %>
 
-import com.amical.ard.dao.CommentairePublicationDAO;
-import com.amical.ard.entites.CommentairePublication;
-import com.amical.ard.entites.Utilisateur;
-import com.amical.ard.entites.Etudiant;
-import com.amical.ard.utils.EntityManagerHelper;
+<%
+    List<Publication> publications =
+        (List<Publication>) request.getAttribute("publications");
 
-import jakarta.persistence.EntityManager;
+    DateTimeFormatter dtf =
+        DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+%>
 
-import jakarta.servlet.ServletException;
-import jakarta.servlet.annotation.WebServlet;
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Publications</title>
+</head>
 
-import jakarta.servlet.http.HttpServlet;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
+<body>
 
-import java.io.IOException;
-import java.time.LocalDateTime;
+<% if (publications != null) {
+    for (Publication p : publications) { %>
 
-@WebServlet("/etudiant/commenter-publication")
-public class CommentairePublicationServlet extends HttpServlet {
+    <div class="publication">
 
-    @Override
-    protected void doPost(HttpServletRequest request,
-                          HttpServletResponse response)
-            throws ServletException, IOException {
+        <h3><%= p.getAuteur() %></h3>
 
-        EntityManager em =
-                EntityManagerHelper.getEntityManager();
+        <p><%= p.getContenu() %></p>
 
-        try {
+        <!-- ===================== -->
+        <!-- LISTE COMMENTAIRES -->
+        <!-- ===================== -->
 
-            HttpSession session =
-                    request.getSession(false);
+        <div id="liste-com-<%= p.getId() %>" class="space-y-3 max-h-60 overflow-y-auto">
 
-            Long utilisateurId = null;
+            <% if (p.getCommentaires() != null) {
+                for (CommentairePublication c : p.getCommentaires()) {
 
-            // =========================
-            // ADMIN CONNECTÉ
-            // =========================
+                    Utilisateur auteur =
+                        com.amical.ard.utils.UserHelper.findById(c.getUtilisateurId());
 
-            Utilisateur admin =
-                    (Utilisateur)
-                            session.getAttribute(
-                                    "utilisateurConnecte"
-                            );
+                    String nomComplet =
+                        (auteur != null)
+                            ? auteur.getPrenom() + " " + auteur.getNom()
+                            : "Utilisateur";
+            %>
 
-            if (admin != null) {
+                <div class="border-b pb-2">
+                    <p class="font-bold text-sm text-blue-800">
+                        <%= nomComplet %>
+                    </p>
 
-                utilisateurId =
-                        admin.getId().longValue();
-            }
+                    <p class="text-gray-700 text-sm">
+                        <%= c.getCommentaire() %>
+                    </p>
 
-            // =========================
-            // ETUDIANT CONNECTÉ
-            // =========================
+                    <p class="text-[10px] text-gray-400">
+                        <%= c.getDateCommentaire().format(dtf) %>
+                    </p>
+                </div>
 
-            if (utilisateurId == null) {
+            <% } } %>
 
-                Etudiant etudiant =
-                        (Etudiant)
-                                session.getAttribute(
-                                        "etudiantConnecte"
-                                );
+        </div>
 
-                if (etudiant != null) {
+        <!-- FORM COMMENTAIRE -->
+        <form onsubmit="posterCommentaire(event, <%= p.getId() %>)">
+            <input type="hidden" name="publicationId" value="<%= p.getId() %>">
+            <input type="text" name="commentaire" placeholder="Écrire..." required>
+            <button type="submit">Envoyer</button>
+        </form>
 
-                    utilisateurId =
-                            etudiant.getId();
-                }
-            }
+    </div>
 
-            // =========================
-            // SÉCURITÉ
-            // =========================
+<% } } %>
 
-            if (utilisateurId == null) {
 
-                response.sendRedirect(
-                        request.getContextPath()
-                                + "/login.jsp"
-                );
+<script>
+async function posterCommentaire(e, id) {
+    e.preventDefault();
 
-                return;
-            }
+    const form = e.target;
+    const formData = new FormData(form);
 
-            // =========================
-            // DONNÉES
-            // =========================
+    const res = await fetch('<%= request.getContextPath() %>/etudiant/commenter-publication', {
+        method: 'POST',
+        body: formData,
+        credentials: 'include'
+    });
 
-            Long publicationId =
-                    Long.parseLong(
-                            request.getParameter(
-                                    "publicationId"
-                            )
-                    );
+    if (res.ok) {
+        const d = await res.json();
 
-            String texte =
-                    request.getParameter(
-                            "commentaire"
-                    );
+        document.getElementById('liste-com-' + id).insertAdjacentHTML('beforeend', `
+            <div class="border-b pb-2">
+                <p class="font-bold text-sm text-blue-800">${d.auteur}</p>
+                <p class="text-gray-700 text-sm">${d.texte}</p>
+                <p class="text-[10px] text-gray-400">${d.date}</p>
+            </div>
+        `);
 
-            // =========================
-            // COMMENTAIRE
-            // =========================
-
-            CommentairePublication commentaire =
-                    new CommentairePublication();
-
-            commentaire.setPublicationId(
-                    publicationId
-            );
-
-            commentaire.setUtilisateurId(
-                    utilisateurId
-            );
-
-            commentaire.setCommentaire(
-                    texte
-            );
-
-            commentaire.setDateCommentaire(
-                    LocalDateTime.now()
-            );
-
-            // =========================
-            // SAUVEGARDE
-            // =========================
-
-            CommentairePublicationDAO dao =
-                    new CommentairePublicationDAO(em);
-
-            dao.ajouter(commentaire);
-
-            // =========================
-            // REDIRECTION
-            // =========================
-
-            response.sendRedirect(
-                    request.getContextPath()
-                            + "/liste-publications"
-            );
-
-        } catch (Exception e) {
-
-            e.printStackTrace();
-
-            response.getWriter().println(
-                    "Erreur COMMENTAIRE : "
-                            + e.getMessage()
-            );
-
-        }
+        form.reset();
+    } else {
+        alert("Erreur commentaire");
     }
 }
+</script>
+
+</body>
+</html>
