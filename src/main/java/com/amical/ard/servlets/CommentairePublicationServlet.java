@@ -7,10 +7,8 @@ import com.amical.ard.entites.Etudiant;
 import com.amical.ard.utils.EntityManagerHelper;
 
 import jakarta.persistence.EntityManager;
-
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
-
 import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -23,135 +21,74 @@ import java.time.LocalDateTime;
 public class CommentairePublicationServlet extends HttpServlet {
 
     @Override
-    protected void doPost(HttpServletRequest request,
-                          HttpServletResponse response)
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        EntityManager em =
-                EntityManagerHelper.getEntityManager();
+        // Récupération de l'EntityManager géré par le filtre (ThreadLocal)
+        EntityManager em = EntityManagerHelper.getEntityManager();
 
         try {
-
-            HttpSession session =
-                    request.getSession(false);
-
-            Long utilisateurId = null;
-
-            // =========================
-            // ADMIN CONNECTÉ
-            // =========================
-
-            Utilisateur admin =
-                    (Utilisateur)
-                            session.getAttribute(
-                                    "utilisateurConnecte"
-                            );
-
-            if (admin != null) {
-
-                utilisateurId =
-                        admin.getId().longValue();
-            }
-
-            // =========================
-            // ETUDIANT CONNECTÉ
-            // =========================
-
-            if (utilisateurId == null) {
-
-                Etudiant etudiant =
-                        (Etudiant)
-                                session.getAttribute(
-                                        "etudiantConnecte"
-                                );
-
-                if (etudiant != null) {
-
-                    utilisateurId =
-                            etudiant.getId();
-                }
-            }
-
-            // =========================
-            // SÉCURITÉ
-            // =========================
-
-            if (utilisateurId == null) {
-
-                response.sendRedirect(
-                        request.getContextPath()
-                                + "/login.jsp"
-                );
-
+            HttpSession session = request.getSession(false);
+            if (session == null) {
+                response.sendRedirect(request.getContextPath() + "/login.jsp");
                 return;
             }
 
-            // =========================
-            // DONNÉES
-            // =========================
+            Long utilisateurId = null;
 
-            Long publicationId =
-                    Long.parseLong(
-                            request.getParameter(
-                                    "publicationId"
-                            )
-                    );
+            // Tentative de récupération Admin
+            Utilisateur admin = (Utilisateur) session.getAttribute("utilisateurConnecte");
+            if (admin != null) {
+                utilisateurId = admin.getId().longValue();
+            } else {
+                // Tentative de récupération Etudiant
+                Etudiant etudiant = (Etudiant) session.getAttribute("etudiantConnecte");
+                if (etudiant != null) {
+                    utilisateurId = etudiant.getId();
+                }
+            }
 
-            String texte =
-                    request.getParameter(
-                            "commentaire"
-                    );
+            if (utilisateurId == null) {
+                response.sendRedirect(request.getContextPath() + "/login.jsp");
+                return;
+            }
 
-            // =========================
-            // COMMENTAIRE
-            // =========================
+            String pubIdParam = request.getParameter("publicationId");
+            String texte = request.getParameter("commentaire");
 
-            CommentairePublication commentaire =
-                    new CommentairePublication();
+            if (pubIdParam == null || texte == null || texte.trim().isEmpty()) {
+                response.sendRedirect(request.getContextPath() + "/liste-publications");
+                return;
+            }
 
-            commentaire.setPublicationId(
-                    publicationId
-            );
+            Long publicationId = Long.parseLong(pubIdParam);
 
-            commentaire.setUtilisateurId(
-                    utilisateurId
-            );
+            // Création du commentaire
+            CommentairePublication commentaire = new CommentairePublication();
+            commentaire.setPublicationId(publicationId);
+            commentaire.setUtilisateurId(utilisateurId);
+            commentaire.setCommentaire(texte);
+            commentaire.setDateCommentaire(LocalDateTime.now());
 
-            commentaire.setCommentaire(
-                    texte
-            );
+            // Sauvegarde via le DAO
+            CommentairePublicationDAO dao = new CommentairePublicationDAO(em);
 
-            commentaire.setDateCommentaire(
-                    LocalDateTime.now()
-            );
-
-            // =========================
-            // SAUVEGARDE
-            // =========================
-
-            CommentairePublicationDAO dao =
-                    new CommentairePublicationDAO(em);
-
+            // Note: Assurez-vous que votre dao.ajouter() utilise em.persist()
+            // et que la transaction est gérée par le filtre ou ici par em.getTransaction()
+            em.getTransaction().begin();
             dao.ajouter(commentaire);
+            em.getTransaction().commit();
 
-            // =========================
-            // REDIRECTION
-            // =========================
-
-            response.sendRedirect(
-                    request.getContextPath()
-                            + "/liste-publications"
-            );
+            response.sendRedirect(request.getContextPath() + "/liste-publications");
 
         } catch (Exception e) {
-
+            // Rollback en cas d'erreur si une transaction est active
+            if (em.getTransaction().isActive()) {
+                em.getTransaction().rollback();
+            }
             e.printStackTrace();
-
-            response.getWriter().println(
-                    "Erreur COMMENTAIRE : "
-                            + e.getMessage()
-            );
-
+            response.getWriter().println("Erreur COMMENTAIRE : " + e.getMessage());
         }
+        // PAS DE em.close() ! Le filtre s'en occupe.
     }
 }
