@@ -4,7 +4,6 @@ import com.amical.ard.dao.CommentairePublicationDAO;
 import com.amical.ard.entites.*;
 import com.amical.ard.utils.EntityManagerHelper;
 import jakarta.persistence.EntityManager;
-import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
 import java.io.IOException;
@@ -13,49 +12,34 @@ import java.time.format.DateTimeFormatter;
 
 @WebServlet("/etudiant/commenter-publication")
 public class CommentairePublicationServlet extends HttpServlet {
-
-    @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
         EntityManager em = EntityManagerHelper.getEntityManager();
         try {
             HttpSession session = request.getSession(false);
             Utilisateur admin = (session != null) ? (Utilisateur) session.getAttribute("utilisateurConnecte") : null;
             Etudiant etudiant = (session != null) ? (Etudiant) session.getAttribute("etudiantConnecte") : null;
 
+            String auteurNom = (admin != null) ? (admin.getPrenom() + " " + admin.getNom()) :
+                    (etudiant != null ? (etudiant.getPrenom() + " " + etudiant.getNom()) : "Utilisateur");
             Long utilisateurId = (admin != null) ? admin.getId().longValue() : (etudiant != null ? etudiant.getId() : null);
-            String auteurNom = (admin != null) ? (admin.getPrenom() + " " + admin.getNom()) : (etudiant != null ? (etudiant.getPrenom() + " " + etudiant.getNom()) : "Utilisateur");
 
             if (utilisateurId == null) { response.sendError(403); return; }
 
-            Long publicationId = Long.parseLong(request.getParameter("publicationId"));
-            String texte = request.getParameter("commentaire");
+            CommentairePublication c = new CommentairePublication();
+            c.setPublicationId(Long.parseLong(request.getParameter("publicationId")));
+            c.setUtilisateurId(utilisateurId);
+            c.setCommentaire(request.getParameter("commentaire"));
+            c.setDateCommentaire(LocalDateTime.now());
 
-            CommentairePublication commentaire = new CommentairePublication();
-            commentaire.setPublicationId(publicationId);
-            commentaire.setUtilisateurId(utilisateurId);
-            commentaire.setCommentaire(texte);
-            commentaire.setDateCommentaire(LocalDateTime.now());
+            new CommentairePublicationDAO(em).ajouter(c);
 
-            // OPTION 1 : Gestion déléguée au DAO (Suppression des em.getTransaction().begin/commit)
-            new CommentairePublicationDAO(em).ajouter(commentaire);
-
-            // RÉPONSE JSON CORRECTE
             response.setContentType("application/json; charset=UTF-8");
-            String jsonResponse = String.format(
-                    "{\"auteur\": \"%s\", \"texte\": \"%s\", \"date\": \"%s\"}",
-                    auteurNom.replace("\"", "\\\""),
-                    texte.replace("\"", "\\\""),
-                    LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))
-            );
-            response.getWriter().write(jsonResponse);
-
+            response.getWriter().write(String.format("{\"auteur\": \"%s\", \"texte\": \"%s\", \"date\": \"%s\"}",
+                    auteurNom.replace("\"", "\\\""), c.getCommentaire().replace("\"", "\\\""),
+                    c.getDateCommentaire().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))));
         } catch (Exception e) {
-            // Rollback seulement si une transaction a été ouverte accidentellement ailleurs
-            if (em.getTransaction().isActive()) em.getTransaction().rollback();
             e.printStackTrace();
             response.sendError(500);
-        } finally {
-            em.close();
-        }
+        } finally { em.close(); }
     }
 }
