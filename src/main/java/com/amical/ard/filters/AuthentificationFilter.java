@@ -5,15 +5,11 @@ import jakarta.servlet.annotation.WebFilter;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+
 import java.io.IOException;
 
 @WebFilter("/*")
 public class AuthentificationFilter implements Filter {
-
-    @Override
-    public void init(FilterConfig filterConfig) throws ServletException {
-        // Initialisation si nécessaire
-    }
 
     @Override
     public void doFilter(ServletRequest req, ServletResponse res, FilterChain chain)
@@ -26,20 +22,26 @@ public class AuthentificationFilter implements Filter {
         String uri = request.getRequestURI().toLowerCase();
         String contextPath = request.getContextPath();
 
-        // 1. Vérification des URLs publiques
+        // ======================================
+        // URLS PUBLIQUES (Autorise le passage)
+        // ======================================
         if (isPublicUrl(uri, contextPath)) {
             chain.doFilter(request, response);
             return;
         }
 
-        // 2. Vérification de la session active
+        // ======================================
+        // VÉRIFICATION CONNEXION
+        // ======================================
         boolean estConnecte = session != null
                 && (session.getAttribute("etudiantConnecte") != null
                 || session.getAttribute("etudiant") != null
                 || session.getAttribute("utilisateurConnecte") != null);
 
+        // ======================================
+        // UTILISATEUR NON CONNECTÉ
+        // ======================================
         if (!estConnecte) {
-            // Redirection selon le type de zone
             if (uri.contains("etudiant")) {
                 response.sendRedirect(contextPath + "/pages/connexionEtudiant.jsp");
             } else {
@@ -48,7 +50,17 @@ public class AuthentificationFilter implements Filter {
             return;
         }
 
-        // 3. Si tout est OK, on continue
+        // ======================================
+        // PROTECTION ÉTUDIANT / ADMIN
+        // ======================================
+        boolean estEtudiant = session.getAttribute("etudiantConnecte") != null
+                || "ETUDIANT".equals(session.getAttribute("userType"));
+
+        if (estEtudiant && (uri.contains("/admin") || uri.contains("/bureau"))) {
+            response.sendRedirect(contextPath + "/espace-etudiant");
+            return;
+        }
+
         chain.doFilter(request, response);
     }
 
@@ -57,23 +69,52 @@ public class AuthentificationFilter implements Filter {
         String cp = contextPath.toLowerCase();
 
         return uri.endsWith("/acceuil.jsp")
+                || uri.endsWith("/accueil.jsp")
                 || uri.equals(cp + "/")
-                || uri.contains("/login")
-                || uri.contains("/connexionetudiant.jsp")
+                || uri.endsWith("/login")
+                || uri.endsWith("/login.jsp")
+                || uri.contains("/logoutservlet")
+                || uri.contains("/etudiant/logout")
+                || uri.contains("/etudiant/paydunya/callback")
+                || uri.contains("/etudiant/caravanes")
+                || uri.contains("/etudiant/commenter-publication") // <-- DÉBLOQUE L'AJAX
+                || uri.contains("?success=true")
+                || uri.contains("?cancel=true")
+                || uri.contains("/motdepasseoublie.jsp")
+                || uri.contains("/verificationcode.jsp")
+                || uri.contains("/nouveaumotdepasse.jsp")
+                || uri.contains("/verifieremailrecuperation")
+                || uri.contains("/verifiercodereset")
+                || uri.contains("/changermotdepasse")
+                || uri.contains("/motdepasseoublieetudiant.jsp")
+                || uri.contains("/verificationcodeetudiant.jsp")
+                || uri.contains("/nouveaumotdepasseetudiant.jsp")
+                || uri.contains("/etudiant/verifieremailrecuperation")
+                || uri.contains("/etudiant/verifiercodereset")
+                || uri.contains("/etudiant/changermotdepasse")
+                || uri.endsWith("/connexionetudiant.jsp")
+                || uri.endsWith("/inscriptionetudiant.jsp")
+                || uri.endsWith("/activationcompte.jsp")
+                || uri.endsWith("/creationmotdepasse.jsp")
+                || uri.contains("/etudiant/activer")
+                || uri.contains("/etudiant/valider")
+                || uri.contains("/etudiant/creer-motdepasse")
+                || uri.contains("/etudiant/connexion")
+                || uri.contains("/etudiant/inscription")
+                || uri.contains("/admin/verifier")
+                || uri.contains("/admin/verifier-code")
+                || uri.contains("/admin/activer")
                 || uri.contains("/liste-publications")
-                // Autorise explicitement l'URL de publication des commentaires
-                // pour permettre au Servlet de traiter la requête AJAX
-                || uri.contains("/etudiant/commenter-publication")
-                // Ressources statiques
+                || uri.contains("/admin/supprimer-publication")
+                || uri.contains("/upload/ajouterpublication.jsp")
                 || uri.endsWith(".css")
                 || uri.endsWith(".js")
                 || uri.endsWith(".png")
                 || uri.endsWith(".jpg")
-                || uri.endsWith(".jpeg");
-    }
-
-    @Override
-    public void destroy() {
-        // Nettoyage si nécessaire
+                || uri.endsWith(".jpeg")
+                || uri.endsWith(".gif")
+                || uri.endsWith(".svg")
+                || uri.endsWith(".woff")
+                || uri.endsWith(".woff2");
     }
 }
