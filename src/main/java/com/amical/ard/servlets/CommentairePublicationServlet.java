@@ -1,45 +1,157 @@
 package com.amical.ard.servlets;
 
 import com.amical.ard.dao.CommentairePublicationDAO;
-import com.amical.ard.entites.*;
+import com.amical.ard.entites.CommentairePublication;
+import com.amical.ard.entites.Utilisateur;
+import com.amical.ard.entites.Etudiant;
 import com.amical.ard.utils.EntityManagerHelper;
+
 import jakarta.persistence.EntityManager;
+
+import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
-import jakarta.servlet.http.*;
+
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
+
 import java.io.IOException;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 
 @WebServlet("/etudiant/commenter-publication")
 public class CommentairePublicationServlet extends HttpServlet {
-    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        EntityManager em = EntityManagerHelper.getEntityManager();
+
+    @Override
+    protected void doPost(HttpServletRequest request,
+                          HttpServletResponse response)
+            throws ServletException, IOException {
+
+        EntityManager em =
+                EntityManagerHelper.getEntityManager();
+
         try {
-            HttpSession session = request.getSession(false);
-            Utilisateur admin = (session != null) ? (Utilisateur) session.getAttribute("utilisateurConnecte") : null;
-            Etudiant etudiant = (session != null) ? (Etudiant) session.getAttribute("etudiantConnecte") : null;
 
-            String auteurNom = (admin != null) ? (admin.getPrenom() + " " + admin.getNom()) :
-                    (etudiant != null ? (etudiant.getPrenom() + " " + etudiant.getNom()) : "Utilisateur");
-            Long utilisateurId = (admin != null) ? admin.getId().longValue() : (etudiant != null ? etudiant.getId() : null);
+            HttpSession session =
+                    request.getSession(false);
 
-            if (utilisateurId == null) { response.sendError(403); return; }
+            Long utilisateurId = null;
 
-            CommentairePublication c = new CommentairePublication();
-            c.setPublicationId(Long.parseLong(request.getParameter("publicationId")));
-            c.setUtilisateurId(utilisateurId);
-            c.setCommentaire(request.getParameter("commentaire"));
-            c.setDateCommentaire(LocalDateTime.now());
+            // =========================
+            // ADMIN CONNECTÉ
+            // =========================
 
-            new CommentairePublicationDAO(em).ajouter(c);
+            Utilisateur admin =
+                    (Utilisateur)
+                            session.getAttribute(
+                                    "utilisateurConnecte"
+                            );
 
-            response.setContentType("application/json; charset=UTF-8");
-            response.getWriter().write(String.format("{\"auteur\": \"%s\", \"texte\": \"%s\", \"date\": \"%s\"}",
-                    auteurNom.replace("\"", "\\\""), c.getCommentaire().replace("\"", "\\\""),
-                    c.getDateCommentaire().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))));
+            if (admin != null) {
+
+                utilisateurId =
+                        admin.getId().longValue();
+            }
+
+            // =========================
+            // ETUDIANT CONNECTÉ
+            // =========================
+
+            if (utilisateurId == null) {
+
+                Etudiant etudiant =
+                        (Etudiant)
+                                session.getAttribute(
+                                        "etudiantConnecte"
+                                );
+
+                if (etudiant != null) {
+
+                    utilisateurId =
+                            etudiant.getId();
+                }
+            }
+
+            // =========================
+            // SÉCURITÉ
+            // =========================
+
+            if (utilisateurId == null) {
+
+                response.sendRedirect(
+                        request.getContextPath()
+                                + "/login.jsp"
+                );
+
+                return;
+            }
+
+            // =========================
+            // DONNÉES
+            // =========================
+
+            Long publicationId =
+                    Long.parseLong(
+                            request.getParameter(
+                                    "publicationId"
+                            )
+                    );
+
+            String texte =
+                    request.getParameter(
+                            "commentaire"
+                    );
+
+            // =========================
+            // COMMENTAIRE
+            // =========================
+
+            CommentairePublication commentaire =
+                    new CommentairePublication();
+
+            commentaire.setPublicationId(
+                    publicationId
+            );
+
+            commentaire.setUtilisateurId(
+                    utilisateurId
+            );
+
+            commentaire.setCommentaire(
+                    texte
+            );
+
+            commentaire.setDateCommentaire(
+                    LocalDateTime.now()
+            );
+
+            // =========================
+            // SAUVEGARDE
+            // =========================
+
+            CommentairePublicationDAO dao =
+                    new CommentairePublicationDAO(em);
+
+            dao.ajouter(commentaire);
+
+            // =========================
+            // REDIRECTION
+            // =========================
+
+            response.sendRedirect(
+                    request.getContextPath()
+                            + "/liste-publications"
+            );
+
         } catch (Exception e) {
+
             e.printStackTrace();
-            response.sendError(500);
-        } finally { em.close(); }
+
+            response.getWriter().println(
+                    "Erreur COMMENTAIRE : "
+                            + e.getMessage()
+            );
+
+        }
     }
 }
