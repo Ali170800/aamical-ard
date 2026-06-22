@@ -50,11 +50,7 @@
 
 <body class="h-full font-sans antialiased text-gray-700 flex">
 
-<!-- SIDEBAR -->
-
 <aside class="w-64 bg-gray-900 text-white flex flex-col h-screen fixed top-0 left-0 shadow-xl z-10">
-
-    <!-- LOGO -->
 
     <div class="h-20 flex items-center px-6 border-b border-gray-800">
 
@@ -86,8 +82,6 @@
 
     </div>
 
-    <!-- RECHERCHE -->
-
     <div class="px-4 pt-5 pb-4">
 
         <div class="relative">
@@ -108,12 +102,8 @@
 
     </div>
 
-    <!-- MENU -->
-
     <nav id="sidebarMenu"
          class="flex-grow py-2 px-4 space-y-1 overflow-y-auto">
-
-        <!-- ETUDIANTS -->
 
         <div class="px-2 pb-1.5 text-[9px] font-black text-gray-500 uppercase tracking-wider">
 
@@ -175,8 +165,6 @@
 
         </a>
 
-        <!-- PAIEMENTS -->
-
         <div class="px-2 pt-4 pb-1.5 text-[9px] font-black text-gray-500 uppercase tracking-wider">
 
             Paiements
@@ -209,8 +197,6 @@
             Paiements Étudiant
 
         </a>
-
-        <!-- CARAVANES -->
 
         <div class="px-2 pt-4 pb-1.5 text-[9px] font-black text-gray-500 uppercase tracking-wider">
 
@@ -281,8 +267,6 @@
 
         </a>
 
-        <!-- BUREAU -->
-
         <div class="px-2 pt-4 pb-1.5 text-[9px] font-black text-gray-500 uppercase tracking-wider">
 
             Bureau & Communications
@@ -334,7 +318,29 @@
 
         </a>
 
-        <!-- COMMUNAUTE -->
+        <div class="px-2 pt-4 pb-1.5 text-[9px] font-black text-gray-500 uppercase tracking-wider">
+
+            Élections & Votes
+
+        </div>
+
+        <a href="<%= request.getContextPath() %>/admin/creer-election"
+           class="menu-item flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 hover:text-indigo-400 text-xs font-semibold transition-all">
+
+            <i class="fas fa-vote-yea text-gray-400 w-4 text-center"></i>
+
+            Créer une élection
+
+        </a>
+
+        <a href="<%= request.getContextPath() %>/admin/dashboard-elections"
+           class="menu-item flex items-center gap-3 px-3 py-2 rounded-lg hover:bg-gray-800 hover:text-indigo-400 text-xs font-semibold transition-all">
+
+            <i class="fas fa-chart-pie text-gray-400 w-4 text-center"></i>
+
+            Tableau de bord votes
+
+        </a>
 
         <div class="px-2 pt-4 pb-1.5 text-[9px] font-black text-gray-500 uppercase tracking-wider">
 
@@ -360,8 +366,6 @@
 
         </a>
 
-        <!-- OUTILS -->
-
         <div class="px-2 pt-4 pb-1.5 text-[9px] font-black text-gray-500 uppercase tracking-wider">
 
             Outils
@@ -386,8 +390,6 @@
 
         </a>
 
-        <!-- LOGOUT -->
-
         <div class="pt-4 border-t border-gray-800 mt-4">
 
             <a href="<%= request.getContextPath() %>/LogoutServlet"
@@ -405,11 +407,7 @@
 
 </aside>
 
-<!-- MAIN -->
-
 <main class="flex-grow ml-64 p-10 bg-gray-50 min-h-screen">
-
-    <!-- HEADER -->
 
     <div class="flex justify-end items-center mb-8">
 
@@ -459,8 +457,6 @@
 
     </div>
 
-    <!-- HERO -->
-
     <div class="bg-gradient-to-r from-indigo-600 to-indigo-800 text-white rounded-3xl shadow-xl shadow-indigo-600/10 p-10 mb-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
 
         <div class="max-w-2xl">
@@ -493,8 +489,6 @@
 
     </div>
 
-    <!-- RACCOURCIS -->
-
     <h2 class="text-sm font-black text-gray-800 uppercase tracking-wider mb-6">
 
         Raccourcis Principaux
@@ -503,7 +497,42 @@
 
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
 
-        <!-- ETUDIANT -->
+        <div class="bg-white p-6 rounded-2xl border border-gray-200/80 shadow-xl shadow-gray-200/40 hover-card">
+
+            <div class="flex items-center gap-4 mb-5">
+
+                <div class="w-12 h-12 rounded-2xl bg-violet-50 text-violet-600 flex items-center justify-center text-base shadow-inner">
+
+                    <i class="fas fa-vote-yea"></i>
+
+                </div>
+
+                <div>
+
+                    <h2 class="text-xs font-black text-gray-800 leading-tight mb-0.5">
+
+                        Élections
+
+                    </h2>
+
+                    <span class="text-[9px] font-bold text-gray-400 uppercase tracking-wider">
+
+                        Module de vote
+
+                    </span>
+
+                </div>
+
+            </div>
+
+            <a href="<%= request.getContextPath() %>/admin/creer-election"
+               class="block text-center px-3 py-2.5 bg-gray-900 hover:bg-indigo-600 text-white text-[10px] font-bold rounded-xl transition-colors">
+
+                ➕ Créer une élection
+
+            </a>
+
+        </div>
 
         <div class="bg-white p-6 rounded-2xl border border-gray-200/80 shadow-xl shadow-gray-200/40 hover-card">
 
@@ -542,8 +571,6 @@
 
         </div>
 
-        <!-- LOGEMENT -->
-
         <div class="bg-white p-6 rounded-2xl border border-gray-200/80 shadow-xl shadow-gray-200/40 hover-card">
 
             <div class="flex items-center gap-4 mb-5">
@@ -580,8 +607,6 @@
             </a>
 
         </div>
-
-        <!-- PAIEMENT -->
 
         <div class="bg-white p-6 rounded-2xl border border-gray-200/80 shadow-xl shadow-gray-200/40 hover-card">
 
@@ -620,126 +645,7 @@
 
         </div>
 
-        <!-- DEPENSE -->
-
-        <div class="bg-white p-6 rounded-2xl border border-gray-200/80 shadow-xl shadow-gray-200/40 hover-card">
-
-            <div class="flex items-center gap-4 mb-5">
-
-                <div class="w-12 h-12 rounded-2xl bg-cyan-50 text-cyan-600 flex items-center justify-center text-base shadow-inner">
-
-                    <i class="fas fa-coins"></i>
-
-                </div>
-
-                <div>
-
-                    <h2 class="text-xs font-black text-gray-800 leading-tight mb-0.5">
-
-                        Dépenses
-
-                    </h2>
-
-                    <span class="text-[9px] font-bold text-gray-400 uppercase tracking-wider">
-
-                        Activités
-
-                    </span>
-
-                </div>
-
-            </div>
-
-            <a href="<%= request.getContextPath() %>/formulaireDepense"
-               class="block text-center px-3 py-2.5 bg-gray-900 hover:bg-indigo-600 text-white text-[10px] font-bold rounded-xl transition-colors">
-
-                ➕ Ajouter une dépense
-
-            </a>
-
-        </div>
-
-        <!-- AJOUTER PUBLICATION -->
-
-        <div class="bg-white p-6 rounded-2xl border border-gray-200/80 shadow-xl shadow-gray-200/40 hover-card">
-
-            <div class="flex items-center gap-4 mb-5">
-
-                <div class="w-12 h-12 rounded-2xl bg-pink-50 text-pink-600 flex items-center justify-center text-base shadow-inner">
-
-                    <i class="fas fa-image"></i>
-
-                </div>
-
-                <div>
-
-                    <h2 class="text-xs font-black text-gray-800 leading-tight mb-0.5">
-
-                        Publication
-
-                    </h2>
-
-                    <span class="text-[9px] font-bold text-gray-400 uppercase tracking-wider">
-
-                        Communauté
-
-                    </span>
-
-                </div>
-
-            </div>
-
-            <a href="<%= request.getContextPath() %>/upload/ajouterPublication.jsp"
-               class="block text-center px-3 py-2.5 bg-gray-900 hover:bg-indigo-600 text-white text-[10px] font-bold rounded-xl transition-colors">
-
-                ➕ Ajouter une publication
-
-            </a>
-
-        </div>
-
-        <!-- VOIR PUBLICATIONS -->
-
-        <div class="bg-white p-6 rounded-2xl border border-gray-200/80 shadow-xl shadow-gray-200/40 hover-card">
-
-            <div class="flex items-center gap-4 mb-5">
-
-                <div class="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center text-base shadow-inner">
-
-                    <i class="fas fa-newspaper"></i>
-
-                </div>
-
-                <div>
-
-                    <h2 class="text-xs font-black text-gray-800 leading-tight mb-0.5">
-
-                        Publications
-
-                    </h2>
-
-                    <span class="text-[9px] font-bold text-gray-400 uppercase tracking-wider">
-
-                        Actualités
-
-                    </span>
-
-                </div>
-
-            </div>
-
-            <a href="<%= request.getContextPath() %>/liste-publications"
-               class="block text-center px-3 py-2.5 bg-gray-900 hover:bg-indigo-600 text-white text-[10px] font-bold rounded-xl transition-colors">
-
-                👁 Voir les publications
-
-            </a>
-
-        </div>
-
     </div>
-
-    <!-- FOOTER -->
 
     <footer class="mt-20 text-center text-xs text-gray-400 border-t border-gray-200/60 pt-10">
 
@@ -756,8 +662,6 @@
     </footer>
 
 </main>
-
-<!-- SCRIPT -->
 
 <script>
 

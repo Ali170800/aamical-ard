@@ -5,13 +5,11 @@
 <head>
     <title>Espace Étudiant - Amicale AERD</title>
 
-```
-<script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
 
-<link
+    <link
         href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
         rel="stylesheet">
-```
 
 </head>
 
@@ -19,7 +17,6 @@
 
 <div class="max-w-6xl mx-auto p-6 md:p-8 space-y-8">
 
-```
 <!-- Header -->
 
 <div class="bg-gradient-to-r from-indigo-600 via-blue-600 to-indigo-700 text-white p-8 rounded-3xl shadow-xl flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
@@ -85,8 +82,6 @@
             </p>
 
         </div>
-
-        <!-- ✅ LIEN CORRIGÉ -->
 
         <a href="${pageContext.request.contextPath}/liste-publications"
            class="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-4 rounded-2xl font-bold shadow-xl shadow-indigo-600/10 transition-all duration-200 hover:shadow-none hover:scale-[1.02] active:scale-95 text-sm flex items-center gap-3">
@@ -345,6 +340,31 @@
 
 </div>
 
+<!-- Élections & Votes (AJOUTÉ) -->
+
+<div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 text-center flex flex-col items-center gap-4">
+
+    <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2">
+        🗳️ Élections & Votes
+    </h2>
+
+    <p class="text-slate-500 text-sm max-w-md">
+        Participez à la vie démocratique de l'amicale en votant pour vos représentants.
+    </p>
+
+    <a href="${pageContext.request.contextPath}/etudiant/elections"
+       class="bg-violet-600 hover:bg-violet-700 text-white px-8 py-3.5 rounded-2xl font-bold shadow-xl shadow-violet-600/10 transition-all duration-200 hover:shadow-none hover:scale-[1.02] active:scale-95 text-sm flex items-center gap-2">
+
+        Accéder aux scrutins
+
+        <span aria-hidden="true">
+            &rarr;
+        </span>
+
+    </a>
+
+</div>
+
 <!-- Caravanes -->
 
 <div class="bg-white p-8 rounded-3xl shadow-sm border border-slate-100 text-center flex flex-col items-center gap-4">
@@ -369,7 +389,6 @@
     </a>
 
 </div>
-```
 
 </div>
 
