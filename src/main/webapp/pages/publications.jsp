@@ -5,10 +5,11 @@
     List<Publication> publications = (List<Publication>) request.getAttribute("publications");
     DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
-    // Récupération des profils
+    // Récupération des deux types de profils possibles
     Utilisateur user = (Utilisateur) session.getAttribute("utilisateurConnecte");
+    Etudiant etudiant = (Etudiant) session.getAttribute("etudiantConnecte");
 
-    // Le bouton ajouter est visible uniquement pour l'admin
+    // Le bouton ne sera visible que si l'utilisateur connecté est un Admin (Utilisateur)
     boolean peutAjouter = (user != null);
 %>
 
@@ -28,6 +29,7 @@
     <div class="flex justify-between items-center mb-8">
         <h1 class="text-3xl font-bold text-gray-800">Fil d'actualité</h1>
 
+        <%-- ✅ Condition : Seul l'Admin (utilisateurConnecte) voit ce bouton --%>
         <% if (peutAjouter) { %>
             <a href="<%= request.getContextPath() %>/upload/ajouterPublication.jsp"
                class="bg-blue-600 text-white px-6 py-2 rounded-xl font-bold hover:bg-blue-700 shadow-lg transition">
@@ -49,7 +51,7 @@
 
         <div class="bg-white rounded-3xl shadow-lg mb-10 overflow-hidden">
 
-            <%-- ✅ LOGIQUE CLOUDINARY : On utilise l'URL complète stockée en BDD --%>
+            <%-- ✅ CORRECTION : Utilisation directe de l'URL Cloudinary --%>
             <img src="<%= p.getImage() %>"
                  class="w-full h-auto object-contain bg-gray-50"
                  alt="Image de la publication">
