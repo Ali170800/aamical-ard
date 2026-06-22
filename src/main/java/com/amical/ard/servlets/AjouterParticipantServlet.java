@@ -10,7 +10,7 @@ import com.amical.ard.entites.ParticipantCaravane;
 import com.amical.ard.entites.Utilisateur;
 import com.amical.ard.enums.StatutPaiement;
 import com.amical.ard.services.EmailService;
-import com.amical.ard.utils.JpaUtil;
+import com.amical.ard.utils.EntityManagerHelper; // Assurez-vous d'utiliser votre classe helper
 
 import jakarta.persistence.EntityManager;
 import jakarta.servlet.ServletException;
@@ -29,260 +29,102 @@ public class AjouterParticipantServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        EntityManager em = JpaUtil.getEntityManagerFactory().createEntityManager();
+        // On récupère l'EM du filtre (via EntityManagerHelper)
+        EntityManager em = EntityManagerHelper.getEntityManager();
 
-        try {
+        EtudiantDAO etudiantDAO = new EtudiantDAO(em);
+        CaravaneDAO caravaneDAO = new CaravaneDAO(em);
 
-            EtudiantDAO etudiantDAO = new EtudiantDAO(em);
-            CaravaneDAO caravaneDAO = new CaravaneDAO(em);
+        request.setAttribute("etudiants", etudiantDAO.listerTous());
+        request.setAttribute("caravanes", caravaneDAO.listerTous());
 
-            request.setAttribute(
-                    "etudiants",
-                    etudiantDAO.listerTous()
-            );
-
-            request.setAttribute(
-                    "caravanes",
-                    caravaneDAO.listerTous()
-            );
-
-        } finally {
-
-            em.close();
-        }
-
-        request.getRequestDispatcher(
-                "/pages/ajouterParticipant.jsp"
-        ).forward(request, response);
+        request.getRequestDispatcher("/pages/ajouterParticipant.jsp").forward(request, response);
     }
 
     @Override
-    protected void doPost(HttpServletRequest request,
-                          HttpServletResponse response)
+    protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        String[] etudiantIds =
-                request.getParameterValues("etudiantIds");
-
-        String caravaneIdStr =
-                request.getParameter("caravaneId");
-
-        String statutStr =
-                request.getParameter("statut");
+        String[] etudiantIds = request.getParameterValues("etudiantIds");
+        String caravaneIdStr = request.getParameter("caravaneId");
+        String statutStr = request.getParameter("statut");
 
         if (etudiantIds == null || etudiantIds.length == 0) {
-
-            request.setAttribute(
-                    "erreur",
-                    "Veuillez sélectionner au moins un étudiant."
-            );
-
+            request.setAttribute("erreur", "Veuillez sélectionner au moins un étudiant.");
             doGet(request, response);
             return;
         }
 
-        EntityManager em =
-                JpaUtil.getEntityManagerFactory()
-                        .createEntityManager();
-
-        ParticipantCaravaneDAO participantDAO =
-                new ParticipantCaravaneDAO(em);
-
-        EtudiantDAO etudiantDAO =
-                new EtudiantDAO(em);
-
-        CaravaneDAO caravaneDAO =
-                new CaravaneDAO(em);
-
-        int successCount = 0;
+        EntityManager em = EntityManagerHelper.getEntityManager();
 
         try {
-
             em.getTransaction().begin();
 
-            int caravaneId =
-                    Integer.parseInt(caravaneIdStr);
+            ParticipantCaravaneDAO participantDAO = new ParticipantCaravaneDAO(em);
+            EtudiantDAO etudiantDAO = new EtudiantDAO(em);
+            CaravaneDAO caravaneDAO = new CaravaneDAO(em);
 
-            Caravane caravane =
-                    caravaneDAO.trouverParId(caravaneId);
+            int caravaneId = Integer.parseInt(caravaneIdStr);
+            Caravane caravane = caravaneDAO.trouverParId(caravaneId);
 
-            if (caravane == null) {
-                throw new Exception("Caravane introuvable");
-            }
+            if (caravane == null) throw new Exception("Caravane introuvable");
 
-            DateTimeFormatter formatter =
-                    DateTimeFormatter.ofPattern("dd/MM/yyyy");
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+            int successCount = 0;
 
             for (String idStr : etudiantIds) {
-
                 try {
+                    Long etudiantId = Long.parseLong(idStr);
+                    Etudiant etudiant = etudiantDAO.trouverParId(etudiantId);
+                    if (etudiant == null) continue;
 
-                    Long etudiantId =
-                            Long.parseLong(idStr);
-
-                    Etudiant etudiant =
-                            etudiantDAO.trouverParId(etudiantId);
-
-                    if (etudiant == null) {
-                        continue;
-                    }
-
-                    ParticipantCaravane p =
-                            new ParticipantCaravane();
-
-                    p.setNom(
-                            etudiant.getNom() != null
-                                    ? etudiant.getNom()
-                                    : ""
-                    );
-
-                    p.setPrenom(
-                            etudiant.getPrenom() != null
-                                    ? etudiant.getPrenom()
-                                    : ""
-                    );
-
-                    p.setEmail(
-                            etudiant.getEmail() != null
-                                    ? etudiant.getEmail()
-                                    : ""
-                    );
-
+                    ParticipantCaravane p = new ParticipantCaravane();
+                    p.setNom(etudiant.getNom() != null ? etudiant.getNom() : "");
+                    p.setPrenom(etudiant.getPrenom() != null ? etudiant.getPrenom() : "");
+                    p.setEmail(etudiant.getEmail() != null ? etudiant.getEmail() : "");
                     p.setCaravane(caravane);
+                    p.setMontant(caravane.getMontant());
 
-                    p.setMontant(
-                            caravane.getMontant()
-                    );
+                    if ("PAYE".equalsIgnoreCase(statutStr)) {
+                        p.setStatutPaiement(StatutPaiement.PAYE);
+                        p.setMontantPaye(caravane.getMontant().intValue());
 
-                    boolean estPaye =
-                            "PAYE".equalsIgnoreCase(statutStr);
-
-                    if (estPaye) {
-
-                        p.setStatutPaiement(
-                                StatutPaiement.PAYE
-                        );
-
-                        p.setMontantPaye(
-                                caravane.getMontant().intValue()
-                        );
-
-                        if (etudiant.getEmail() != null
-                                && !etudiant.getEmail().trim().isEmpty()) {
-
-                            String sujet =
-                                    "Confirmation de votre participation à la caravane";
-
-                            String message =
-                                    String.format(
-                                            "Bonjour %s %s,\n\n"
-                                                    + "Votre inscription à la caravane %s prévue le %s a été confirmée.\n\n"
-                                                    + "Montant payé : %.2f FCFA.\n\n"
-                                                    + "Merci pour votre participation !\n\n"
-                                                    + "L'équipe de l'Amicale.",
-                                            etudiant.getPrenom(),
-                                            etudiant.getNom(),
-                                            caravane.getNom(),
-                                            caravane.getDate() != null
-                                                    ? caravane.getDate().format(formatter)
-                                                    : "N/A",
-                                            caravane.getMontant()
-                                    );
-
-                            emailService.envoyerEmail(
-                                    etudiant.getEmail(),
-                                    sujet,
-                                    message
-                            );
+                        if (etudiant.getEmail() != null && !etudiant.getEmail().trim().isEmpty()) {
+                            String message = String.format("Bonjour %s %s,\n\nVotre inscription à la caravane %s est confirmée.\nMontant payé : %.2f FCFA.",
+                                    etudiant.getPrenom(), etudiant.getNom(), caravane.getNom(), caravane.getMontant());
+                            emailService.envoyerEmail(etudiant.getEmail(), "Confirmation de participation", message);
                         }
-
                     } else {
-
-                        p.setStatutPaiement(
-                                StatutPaiement.Non_Paye
-                        );
-
+                        p.setStatutPaiement(StatutPaiement.Non_Paye);
                         p.setMontantPaye(0);
                     }
 
                     participantDAO.ajouter(p);
-
                     successCount++;
-
                 } catch (Exception ex) {
-
-                    System.err.println(
-                            "Erreur étudiant ID="
-                                    + idStr
-                                    + " : "
-                                    + ex.getMessage()
-                    );
+                    System.err.println("Erreur étudiant ID=" + idStr + " : " + ex.getMessage());
                 }
             }
 
-            em.getTransaction().commit();
-
-            // =================================================
-            // LOGS
-            // =================================================
-
-            HttpSession session =
-                    request.getSession();
-
-            Utilisateur utilisateurConnecte =
-                    (Utilisateur) session.getAttribute(
-                            "utilisateurConnecte"
-                    );
-
-            if (utilisateurConnecte != null) {
-
-                ActionLogDAO actionLogDAO =
-                        new ActionLogDAO(em);
-
-                String details =
-                        successCount
-                                + " participant(s) ajouté(s) à la caravane : "
-                                + caravane.getNom();
-
-                actionLogDAO.enregistrerAction(
-                        utilisateurConnecte.getId(),
-                        utilisateurConnecte.getPrenom()
-                                + " "
-                                + utilisateurConnecte.getNom(),
-                        utilisateurConnecte.getRole(),
-                        "Ajout participants caravane",
-                        details
-                );
+            // Gestion des logs
+            HttpSession session = request.getSession();
+            Utilisateur user = (Utilisateur) session.getAttribute("utilisateurConnecte");
+            if (user != null) {
+                new ActionLogDAO(em).enregistrerAction(user.getId(), user.getPrenom() + " " + user.getNom(),
+                        user.getRole(), "Ajout participants caravane", successCount + " ajoutés à : " + caravane.getNom());
             }
 
-            request.getSession().setAttribute(
-                    "success",
-                    successCount
-                            + " participant(s) ajouté(s) avec succès !"
-            );
+            em.getTransaction().commit();
+            session.setAttribute("success", successCount + " participant(s) ajouté(s) avec succès !");
 
         } catch (Exception e) {
-
-            if (em.getTransaction().isActive()) {
-                em.getTransaction().rollback();
-            }
-
+            if (em.getTransaction().isActive()) em.getTransaction().rollback();
             e.printStackTrace();
-
-            request.getSession().setAttribute(
-                    "erreur",
-                    "Erreur lors de l'ajout : "
-                            + e.getMessage()
-            );
-
-        } finally {
-
-            em.close();
+            request.getSession().setAttribute("erreur", "Erreur lors de l'ajout : " + e.getMessage());
         }
 
-        response.sendRedirect(
-                request.getContextPath()
-                        + "/participants/selectionner"
-        );
+        // PAS DE em.close() ici : C'est le filtre qui s'en charge.
+
+        response.sendRedirect(request.getContextPath() + "/participants/selectionner");
     }
 }
