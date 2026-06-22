@@ -24,7 +24,7 @@
                                 </p>
                             </div>
                             <%-- Lien corrigé : utilise bien le contextPath pour éviter les erreurs 404 --%>
-                            <a href="${pageContext.request.contextPath}/etudiant/voter?electionId=${election.id}"
+                            <a href="${pageContext.request.contextPath}/api/voter?electionId=${election.id}"
                                class="bg-indigo-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-indigo-700 transition-colors">
                                 Voter maintenant
                             </a>
