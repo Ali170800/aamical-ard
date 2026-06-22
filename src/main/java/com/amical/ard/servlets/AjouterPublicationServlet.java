@@ -15,7 +15,11 @@ import java.time.LocalDateTime;
 import java.util.Map;
 
 @WebServlet("/admin/ajouter-publication")
-@MultipartConfig
+@MultipartConfig(
+        fileSizeThreshold = 1024 * 1024 * 1,  // 1 MB
+        maxFileSize = 1024 * 1024 * 10,       // 10 MB
+        maxRequestSize = 1024 * 1024 * 15     // 15 MB
+)
 public class AjouterPublicationServlet extends HttpServlet {
 
     @Override
@@ -31,22 +35,33 @@ public class AjouterPublicationServlet extends HttpServlet {
         }
 
         try {
-            // Infos auteur
+            // Infos auteur via Reflection
             Integer auteurId = (Integer) admin.getClass().getMethod("getId").invoke(admin);
             String nom = (String) admin.getClass().getMethod("getNom").invoke(admin);
             String prenom = (String) admin.getClass().getMethod("getPrenom").invoke(admin);
             String role = (String) admin.getClass().getMethod("getRole").invoke(admin);
 
-            // Upload Cloudinary
+            // 1. Récupération du Part
             Part imagePart = request.getPart("image");
+
+            // 2. Conversion du flux en tableau d'octets (Solution pour l'erreur Unrecognized file parameter)
+            byte[] fileContent = imagePart.getInputStream().readAllBytes();
+
+            // 3. Envoi vers Cloudinary
             Map uploadResult = CloudinaryUtil.getCloudinary().uploader().upload(
-                    imagePart.getInputStream(), ObjectUtils.emptyMap());
+                    fileContent,
+                    ObjectUtils.asMap(
+                            "resource_type", "image",
+                            "folder", "publications"
+                    )
+            );
+
             String imageUrl = (String) uploadResult.get("secure_url");
 
-            // Sauvegarde Publication
+            // 4. Création et sauvegarde de la Publication
             Publication publication = new Publication();
             publication.setDescription(request.getParameter("description"));
-            publication.setImage(imageUrl); // URL Cloudinary
+            publication.setImage(imageUrl);
             publication.setAuteurId(auteurId.longValue());
             publication.setAuteurType("ADMIN");
             publication.setAuteurNom(nom);
@@ -54,14 +69,14 @@ public class AjouterPublicationServlet extends HttpServlet {
             publication.setAuteurRole(role);
             publication.setDatePublication(LocalDateTime.now());
 
-            // Utilisation du filtre : Pas de em.close() ici
             PublicationDAO dao = new PublicationDAO(EntityManagerHelper.getEntityManager());
             dao.ajouter(publication);
 
             response.sendRedirect(request.getContextPath() + "/liste-publications");
 
         } catch (Exception e) {
-            throw new ServletException("Erreur lors de l'ajout de la publication", e);
+            e.printStackTrace();
+            throw new ServletException("Erreur lors de l'ajout de la publication : " + e.getMessage(), e);
         }
     }
 }
