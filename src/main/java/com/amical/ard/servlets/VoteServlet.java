@@ -1,74 +1,58 @@
 package com.amical.ard.servlets;
 
-import com.amical.ard.dao.*;
-import com.amical.ard.entites.*;
+import com.amical.ard.dao.VoteElectionDAO;
+import com.amical.ard.entites.Etudiant;
 import com.amical.ard.utils.EntityManagerHelper;
 import jakarta.persistence.EntityManager;
 import jakarta.servlet.annotation.WebServlet;
-import jakarta.servlet.http.*;
+import jakarta.servlet.http.HttpServlet;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpSession;
 import java.io.IOException;
-import java.time.LocalDateTime;
 
 @WebServlet("/api/voter")
 public class VoteServlet extends HttpServlet {
 
-    // Bloque les appels via lien direct (GET)
+    // Cette méthode règle ton erreur 405 en redirigeant proprement
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        response.setStatus(HttpServletResponse.SC_METHOD_NOT_ALLOWED);
-        response.getWriter().write("{\"success\": false, \"message\": \"Méthode non autorisée.\"}");
+        // Redirection vers une page cohérente (tu peux changer par "/pages/liste-elections.jsp" si tu préfères)
+        response.sendRedirect(request.getContextPath() + "/pages/voter.jsp");
     }
 
+    // Cette méthode gère l'action de voter
     @Override
     protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        response.setContentType("application/json");
         HttpSession session = request.getSession();
-
-        // 1. Vérification session
         Etudiant etudiant = (Etudiant) session.getAttribute("etudiantConnecte");
+
+        // Sécurité : si non connecté
         if (etudiant == null) {
-            response.setStatus(403);
-            response.getWriter().write("{\"success\": false, \"message\": \"Connectez-vous pour voter.\"}");
+            response.sendRedirect(request.getContextPath() + "/pages/login.jsp");
             return;
         }
 
-        // 2. Récupération et validation paramètres
         String eIdStr = request.getParameter("electionId");
         String cIdStr = request.getParameter("candidatId");
 
-        if (eIdStr == null || cIdStr == null) {
-            response.setStatus(400);
-            response.getWriter().write("{\"success\": false, \"message\": \"Paramètres manquants.\"}");
-            return;
-        }
-
         EntityManager em = EntityManagerHelper.getEntityManager();
         try {
-            Long electionId = Long.parseLong(eIdStr);
-            Long candidatId = Long.parseLong(cIdStr);
-
-            // 3. Vérification élection
-            Election election = new ElectionDAO(em).trouverParId(electionId);
-            if (election == null || LocalDateTime.now().isAfter(election.getDateFin())) {
-                response.getWriter().write("{\"success\": false, \"message\": \"Scrutin fermé ou inexistant.\"}");
-                return;
-            }
-
-            // 4. Enregistrement du vote
-            VoteElectionDAO vDao = new VoteElectionDAO(em);
             em.getTransaction().begin();
-            boolean voteEffectue = vDao.voter(electionId, candidatId, etudiant.getId());
+            VoteElectionDAO vDao = new VoteElectionDAO(em);
+
+            // Tentative de vote
+            boolean ok = vDao.voter(Long.parseLong(eIdStr), Long.parseLong(cIdStr), etudiant.getId());
             em.getTransaction().commit();
 
-            if (voteEffectue) {
-                response.getWriter().write("{\"success\": true, \"message\": \"Vote enregistré avec succès !\"}");
-            } else {
-                response.getWriter().write("{\"success\": false, \"message\": \"Vous avez déjà voté pour cette élection.\"}");
-            }
+            // Redirection vers la page de vote avec le résultat
+            String statut = ok ? "success" : "deja";
+            response.sendRedirect(request.getContextPath() + "/pages/voter.jsp?electionId=" + eIdStr + "&status=" + statut);
+
         } catch (Exception e) {
             if (em.getTransaction().isActive()) em.getTransaction().rollback();
-            response.setStatus(500);
-            response.getWriter().write("{\"success\": false, \"message\": \"Erreur serveur lors de l'enregistrement.\"}");
+            // En cas d'erreur technique
+            response.sendRedirect(request.getContextPath() + "/pages/voter.jsp?electionId=" + eIdStr + "&status=error");
         } finally {
             em.close();
         }

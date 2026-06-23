@@ -1,5 +1,4 @@
 package com.amical.ard.servlets;
-
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
 import java.io.IOException;
