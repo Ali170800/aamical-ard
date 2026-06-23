@@ -13,7 +13,6 @@ public class VoteElectionDAO {
 
     /**
      * Enregistre un vote de manière anonyme et marque l'étudiant dans la table de contrôle.
-     * Note : Assurez-vous que l'appelant gère la transaction (em.getTransaction().begin/commit).
      */
     public boolean voter(Long electionId, Long candidatId, Long etudiantId) {
         try {
@@ -26,19 +25,19 @@ public class VoteElectionDAO {
 
             if (dejaVote > 0) return false;
 
-            // 2. Récupération des références sécurisées
+            // 2. Récupération des références
             Election election = em.getReference(Election.class, electionId);
             CandidatElection candidat = em.getReference(CandidatElection.class, candidatId);
             Etudiant etudiant = em.getReference(Etudiant.class, etudiantId);
 
-            // 3. Enregistrement du vote ANONYME (pas de lien avec l'étudiant)
+            // 3. Enregistrement du vote ANONYME
             VoteElection vote = new VoteElection();
             vote.setElection(election);
             vote.setCandidat(candidat);
             vote.setDateVote(LocalDateTime.now());
             em.persist(vote);
 
-            // 4. Marquage de l'étudiant dans la table de contrôle (l'émargement)
+            // 4. Marquage de l'étudiant dans la table de contrôle
             VoteControle controle = new VoteControle();
             controle.setElection(election);
             controle.setEtudiant(etudiant);
@@ -46,9 +45,24 @@ public class VoteElectionDAO {
 
             return true;
         } catch (Exception e) {
-            // Loggez l'erreur pour le debug
             System.err.println("Erreur lors de l'enregistrement du vote : " + e.getMessage());
             return false;
+        }
+    }
+
+    /**
+     * Compte les votes pour un candidat spécifique dans une élection spécifique.
+     */
+    public long compterVotesPourCandidat(long candidatId, long electionId) {
+        try {
+            // Requête filtrée par candidat et par élection pour garantir l'exactitude des résultats
+            return em.createQuery("SELECT COUNT(v) FROM VoteElection v WHERE v.candidat.id = :cId AND v.election.id = :eId", Long.class)
+                    .setParameter("cId", candidatId)
+                    .setParameter("eId", electionId)
+                    .getSingleResult();
+        } catch (Exception e) {
+            System.err.println("Erreur comptage voix : " + e.getMessage());
+            return 0;
         }
     }
 }
