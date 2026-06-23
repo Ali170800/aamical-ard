@@ -1,6 +1,5 @@
 package com.amical.ard.servlets;
 
-import com.amical.ard.utils.EntityManagerHelper;
 import jakarta.persistence.EntityManager;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.HttpServlet;
@@ -17,9 +16,11 @@ public class ResultatsServlet extends HttpServlet {
         response.setContentType("application/json");
         response.setCharacterEncoding("UTF-8");
 
+        // Récupération de l'EntityManager injecté par le filtre
+        EntityManager em = (EntityManager) request.getAttribute("em");
+
         try {
             Long electionId = Long.parseLong(request.getParameter("electionId"));
-            EntityManager em = EntityManagerHelper.getEntityManager();
 
             Long totalVotes = em.createQuery("SELECT COUNT(v) FROM VoteElection v WHERE v.election.id = :eId", Long.class)
                     .setParameter("eId", electionId).getSingleResult();
@@ -39,8 +40,10 @@ public class ResultatsServlet extends HttpServlet {
             }
             json.append("]");
             response.getWriter().write(json.toString());
-            em.close();
+
+            // Note : pas de em.close() ici, le filtre s'en occupe
         } catch (Exception e) {
+            e.printStackTrace();
             response.getWriter().write("[]");
         }
     }

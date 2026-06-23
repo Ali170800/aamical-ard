@@ -47,6 +47,13 @@
                                class="text-[10px] font-bold uppercase py-2 px-4 bg-gray-900 text-white rounded-lg hover:bg-indigo-600 transition-colors">
                                 Voir les résultats détaillés
                             </a>
+
+                            <!-- Nouveau bouton Supprimer -->
+                            <a href="${pageContext.request.contextPath}/admin/supprimer-election?id=${election.id}"
+                               onclick="return confirm('Êtes-vous sûr de vouloir supprimer cette élection ? Cette action est irréversible.')"
+                               class="text-[10px] font-bold uppercase py-2 px-4 bg-red-50 text-red-600 rounded-lg hover:bg-red-600 hover:text-white transition-colors">
+                                Supprimer
+                            </a>
                         </div>
                     </div>
                 </c:forEach>

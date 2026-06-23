@@ -1,7 +1,6 @@
 package com.amical.ard.servlets;
 
 import com.amical.ard.entites.*;
-import com.amical.ard.utils.EntityManagerHelper;
 import jakarta.persistence.EntityManager;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -12,7 +11,6 @@ import java.time.LocalDateTime;
 @WebServlet("/admin/creer-election")
 public class CreerElectionServlet extends HttpServlet {
 
-    // AJOUTEZ CETTE MÉTHODE POUR RÉGLER L'ERREUR 405
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
@@ -20,16 +18,19 @@ public class CreerElectionServlet extends HttpServlet {
     }
 
     @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException {
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
+        // On récupère l'EntityManager ouvert par le filtre
+        EntityManager em = (EntityManager) request.getAttribute("em");
+
         String titre = request.getParameter("titre");
         String[] noms = request.getParameterValues("nom");
         String[] prenoms = request.getParameterValues("prenom");
         LocalDateTime debut = LocalDateTime.parse(request.getParameter("dateDebut"));
         LocalDateTime fin = LocalDateTime.parse(request.getParameter("dateFin"));
 
-        EntityManager em = EntityManagerHelper.getEntityManager();
         try {
             em.getTransaction().begin();
+
             Election e = new Election();
             e.setTitre(titre);
             e.setDateDebut(debut);
@@ -45,13 +46,17 @@ public class CreerElectionServlet extends HttpServlet {
                     em.persist(c);
                 }
             }
+
             em.getTransaction().commit();
             response.sendRedirect(request.getContextPath() + "/pages/dashboard-elections");
+
         } catch (Exception e) {
-            if (em.getTransaction().isActive()) em.getTransaction().rollback();
+            if (em.getTransaction().isActive()) {
+                em.getTransaction().rollback();
+            }
+            e.printStackTrace();
             response.sendRedirect(request.getContextPath() + "/pages/creer-election?error=1");
-        } finally {
-            em.close();
         }
+        // Plus besoin de em.close() ici, le filtre s'en chargera automatiquement.
     }
 }

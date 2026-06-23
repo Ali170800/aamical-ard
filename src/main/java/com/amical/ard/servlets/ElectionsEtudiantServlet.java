@@ -2,7 +2,6 @@ package com.amical.ard.servlets;
 
 import com.amical.ard.dao.ElectionDAO;
 import com.amical.ard.entites.Election;
-import com.amical.ard.utils.EntityManagerHelper;
 import jakarta.persistence.EntityManager;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -18,7 +17,9 @@ public class ElectionsEtudiantServlet extends HttpServlet {
     protected void doGet(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        EntityManager em = EntityManagerHelper.getEntityManager();
+        // On récupère l'EntityManager préparé par le filtre
+        EntityManager em = (EntityManager) request.getAttribute("em");
+
         try {
             // 1. Récupérer la liste des élections via le DAO
             ElectionDAO electionDAO = new ElectionDAO(em);
@@ -31,10 +32,9 @@ public class ElectionsEtudiantServlet extends HttpServlet {
             request.getRequestDispatcher("/pages/listeElections.jsp").forward(request, response);
 
         } catch (Exception e) {
-            // En cas d'erreur, on affiche une erreur 500 ou on redirige
+            // En cas d'erreur, on délègue au conteneur ou on logue l'erreur
             throw new ServletException("Erreur lors de la récupération des élections", e);
-        } finally {
-            em.close();
         }
+        // Pas de em.close() ici : le filtre s'en occupe dans son bloc finally.
     }
 }

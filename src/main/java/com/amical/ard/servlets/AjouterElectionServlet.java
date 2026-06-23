@@ -4,7 +4,6 @@ import com.amical.ard.dao.ElectionDAO;
 import com.amical.ard.entites.CandidatElection;
 import com.amical.ard.entites.Election;
 import com.amical.ard.utils.CloudinaryUtil;
-import com.amical.ard.utils.EntityManagerHelper;
 import com.cloudinary.utils.ObjectUtils;
 import jakarta.persistence.EntityManager;
 import jakarta.servlet.ServletException;
@@ -31,7 +30,8 @@ public class AjouterElectionServlet extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        EntityManager em = EntityManagerHelper.getEntityManager();
+        // On récupère l'EntityManager préparé par le filtre
+        EntityManager em = (EntityManager) request.getAttribute("em");
 
         try {
             em.getTransaction().begin();
@@ -59,7 +59,6 @@ public class AjouterElectionServlet extends HttpServlet {
                 candidat.setDescription(request.getParameter("descCandidat_" + i));
                 candidat.setElection(election);
 
-                // 3. Upload photo Cloudinary
                 Part photoPart = request.getPart("photoCandidat_" + i);
                 if (photoPart != null && photoPart.getSize() > 0) {
                     byte[] fileContent = photoPart.getInputStream().readAllBytes();
@@ -74,25 +73,22 @@ public class AjouterElectionServlet extends HttpServlet {
 
             election.setCandidats(candidats);
 
-            // 4. Enregistrement via DAO
+            // 3. Enregistrement
             ElectionDAO dao = new ElectionDAO(em);
             dao.ajouter(election);
 
             em.getTransaction().commit();
             request.getSession().setAttribute("success", "Élection créée avec succès !");
-            response.sendRedirect(request.getContextPath() + "/pages/dashboard-elections");
+            response.sendRedirect(request.getContextPath() + "/admin/dashboard-elections");
 
         } catch (Exception e) {
             if (em.getTransaction().isActive()) {
                 em.getTransaction().rollback();
             }
             e.printStackTrace();
-            request.getSession().setAttribute("erreur", "Erreur lors de la création : " + e.getMessage());
-            response.sendRedirect(request.getContextPath() + "/pages/ajouter-election");
-        } finally {
-            if (em != null && em.isOpen()) {
-                em.close();
-            }
+            request.getSession().setAttribute("erreur", "Erreur : " + e.getMessage());
+            response.sendRedirect(request.getContextPath() + "/admin/ajouter-election");
         }
+        // Pas de em.close() ici, le filtre s'en occupe !
     }
 }

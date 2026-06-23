@@ -24,12 +24,9 @@ public class ElectionDAO {
         return em.createQuery("SELECT e FROM Election e ORDER BY e.dateCreation DESC", Election.class)
                 .getResultList();
     }
-
-    public void supprimer(Long id) {
-        Election e = trouverParId(id);
-        if (e != null) {
-            em.remove(e);
-        }
+    public List<Election> toutesLesElections() {
+        return em.createQuery("SELECT e FROM Election e", Election.class)
+                .getResultList();
     }
 
     // --- MÉTHODES POUR LE DASHBOARD (Statistiques) ---
@@ -50,6 +47,28 @@ public class ElectionDAO {
                     .getSingleResult();
         } catch (Exception e) {
             return 0;
+        }
+    }
+    public void supprimer(Long id) {
+        Election e = em.find(Election.class, id);
+        if (e != null) {
+            // 1. Supprimer les entrées dans vote_controle liées à cette élection
+            em.createQuery("DELETE FROM VoteControle v WHERE v.election.id = :eId")
+                    .setParameter("eId", id)
+                    .executeUpdate();
+
+            // 2. Supprimer les votes liés (si tu as aussi une table VoteElection)
+            em.createQuery("DELETE FROM VoteElection v WHERE v.election.id = :eId")
+                    .setParameter("eId", id)
+                    .executeUpdate();
+
+            // 3. Supprimer les candidats liés (si nécessaire, selon ton modèle)
+            em.createQuery("DELETE FROM CandidatElection c WHERE c.election.id = :eId")
+                    .setParameter("eId", id)
+                    .executeUpdate();
+
+            // 4. Enfin, supprimer l'élection elle-même
+            em.remove(e);
         }
     }
 }

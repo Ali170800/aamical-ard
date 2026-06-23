@@ -1,11 +1,12 @@
 package com.amical.ard.filters;
 
+import com.amical.ard.utils.EntityManagerHelper;
+import jakarta.persistence.EntityManager;
 import jakarta.servlet.*;
 import jakarta.servlet.annotation.WebFilter;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
-
 import java.io.IOException;
 
 @WebFilter("/*")
@@ -17,51 +18,62 @@ public class AuthentificationFilter implements Filter {
 
         HttpServletRequest request = (HttpServletRequest) req;
         HttpServletResponse response = (HttpServletResponse) res;
-        HttpSession session = request.getSession(false);
 
-        String uri = request.getRequestURI().toLowerCase();
-        String contextPath = request.getContextPath();
+        // 1. INITIALISATION SYSTÉMATIQUE DE L'ENTITY MANAGER
+        // On le fait AVANT toute vérification pour qu'il soit toujours disponible
+        EntityManager em = EntityManagerHelper.getEntityManager();
+        request.setAttribute("em", em);
 
-        // ======================================
-        // URLS PUBLIQUES (Autorise le passage)
-        // ======================================
-        if (isPublicUrl(uri, contextPath)) {
-            chain.doFilter(request, response);
-            return;
-        }
+        try {
+            HttpSession session = request.getSession(false);
+            String uri = request.getRequestURI().toLowerCase();
+            String contextPath = request.getContextPath();
 
-        // ======================================
-        // VÉRIFICATION CONNEXION
-        // ======================================
-        boolean estConnecte = session != null
-                && (session.getAttribute("etudiantConnecte") != null
-                || session.getAttribute("etudiant") != null
-                || session.getAttribute("utilisateurConnecte") != null);
-
-        // ======================================
-        // UTILISATEUR NON CONNECTÉ
-        // ======================================
-        if (!estConnecte) {
-            if (uri.contains("etudiant")) {
-                response.sendRedirect(contextPath + "/pages/connexionEtudiant.jsp");
-            } else {
-                response.sendRedirect(contextPath + "/acceuil.jsp");
+            // ======================================
+            // URLS PUBLIQUES
+            // ======================================
+            if (isPublicUrl(uri, contextPath)) {
+                chain.doFilter(request, response);
+                return;
             }
-            return;
+
+            // ======================================
+            // VÉRIFICATION CONNEXION
+            // ======================================
+            boolean estConnecte = session != null
+                    && (session.getAttribute("etudiantConnecte") != null
+                    || session.getAttribute("etudiant") != null
+                    || session.getAttribute("utilisateurConnecte") != null);
+
+            if (!estConnecte) {
+                if (uri.contains("etudiant")) {
+                    response.sendRedirect(contextPath + "/pages/connexionEtudiant.jsp");
+                } else {
+                    response.sendRedirect(contextPath + "/acceuil.jsp");
+                }
+                return;
+            }
+
+            // ======================================
+            // PROTECTION ÉTUDIANT / ADMIN
+            // ======================================
+            boolean estEtudiant = session.getAttribute("etudiantConnecte") != null
+                    || "ETUDIANT".equals(session.getAttribute("userType"));
+
+            if (estEtudiant && (uri.contains("/admin") || uri.contains("/bureau"))) {
+                response.sendRedirect(contextPath + "/espace-etudiant");
+                return;
+            }
+
+            chain.doFilter(request, response);
+
+        } finally {
+            // 2. FERMETURE SYSTÉMATIQUE
+            // Même en cas d'erreur ou de redirection, on ferme la connexion ici
+            if (em != null && em.isOpen()) {
+                em.close();
+            }
         }
-
-        // ======================================
-        // PROTECTION ÉTUDIANT / ADMIN
-        // ======================================
-        boolean estEtudiant = session.getAttribute("etudiantConnecte") != null
-                || "ETUDIANT".equals(session.getAttribute("userType"));
-
-        if (estEtudiant && (uri.contains("/admin") || uri.contains("/bureau"))) {
-            response.sendRedirect(contextPath + "/espace-etudiant");
-            return;
-        }
-
-        chain.doFilter(request, response);
     }
 
     private boolean isPublicUrl(String uri, String contextPath) {
@@ -77,7 +89,6 @@ public class AuthentificationFilter implements Filter {
                 || uri.contains("/etudiant/logout")
                 || uri.contains("/etudiant/paydunya/callback")
                 || uri.contains("/etudiant/caravanes")
-
                 || uri.contains("?success=true")
                 || uri.contains("?cancel=true")
                 || uri.contains("/motdepasseoublie.jsp")
