@@ -1,40 +1,19 @@
 const CACHE_NAME = 'aerd-v1';
-
-// Liste uniquement des fichiers LOCAUX.
-// Ne mettez JAMAIS de liens externes (CDN) ici.
 const ASSETS = [
-  '/',
-  '/accueil.jsp',
   '/manifest.json',
   '/icons/icon-192.jpg',
   '/icons/icon-512.jpg'
 ];
 
-self.addEventListener('install', (event) => {
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => {
-      return cache.addAll(ASSETS);
-    })
-  );
-  self.skipWaiting();
+self.addEventListener('install', (e) => {
+  e.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS)));
 });
 
-self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    caches.keys().then((cacheNames) => {
-      return Promise.all(
-        cacheNames.filter(name => name !== CACHE_NAME).map(name => caches.delete(name))
-      );
-    })
-  );
-  self.clients.claim();
-});
-
-self.addEventListener('fetch', (event) => {
-  event.respondWith(
-    caches.match(event.request).then((response) => {
-      // Stratégie : Cache d'abord, puis réseau si non trouvé
-      return response || fetch(event.request);
-    })
-  );
+self.addEventListener('fetch', (e) => {
+  // On ne met pas en cache la page JSP, on va chercher sur le réseau directement
+  if (e.request.url.includes('.jsp')) {
+    e.respondWith(fetch(e.request));
+  } else {
+    e.respondWith(caches.match(e.request).then(res => res || fetch(e.request)));
+  }
 });
