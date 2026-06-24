@@ -1,21 +1,12 @@
 {
   "name": "Amicale AERD",
   "short_name": "AERD",
-  "description": "Plateforme de gestion électorale AERD",
   "start_url": "/accueil.jsp",
   "display": "standalone",
   "background_color": "#ffffff",
-  "theme_color": "#2563eb",
+  "theme_color": "#1e3a8a",
   "icons": [
-    {
-      "src": "/icons/icon-192.jpg",
-      "sizes": "192x192",
-      "type": "image/jpeg"
-    },
-    {
-      "src": "/icons/icon-512.jpg",
-      "sizes": "512x512",
-      "type": "image/jpeg"
-    }
+    { "src": "/icons/icon-192.jpg", "sizes": "192x192", "type": "image/jpeg" },
+    { "src": "/icons/icon-512.jpg", "sizes": "512x512", "type": "image/jpeg" }
   ]
 }

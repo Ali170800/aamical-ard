@@ -2,33 +2,26 @@
 <html>
 <head>
     <title>Bienvenue - Amicale AERD</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <!-- Chargement différé pour éviter les blocages CORS -->
+    <script src="https://cdn.tailwindcss.com" defer></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet" media="print" onload="this.media='all'">
 
-    <!-- Chemins corrigés pour éviter l'erreur 404 -->
-    <link rel="manifest" href="/manifest.json">
-    <meta name="mobile-web-app-capable" content="yes">
+    <link rel="manifest" href="${pageContext.request.contextPath}/manifest.json">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <meta name="apple-mobile-web-app-title" content="AERD">
-    <link rel="apple-touch-icon" href="/icons/icon-192.jpg">
+    <link rel="apple-touch-icon" href="${pageContext.request.contextPath}/icons/icon-192.jpg">
 
     <style>
-        body {
-            background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
-        }
-        .card {
-            transition: all 0.4s ease;
-        }
-        .card:hover {
-            transform: translateY(-12px);
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
-        }
+        body { background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%); }
+        .card { transition: all 0.4s ease; }
+        .card:hover { transform: translateY(-12px); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4); }
     </style>
 </head>
 <body class="min-h-screen flex items-center justify-center p-6">
-
     <div class="max-w-5xl w-full">
+        <!-- Contenu header -->
         <div class="text-center mb-12">
             <div class="inline-flex items-center gap-3 bg-white/20 backdrop-blur-md px-6 py-3 rounded-3xl mb-6">
                 <i class="fas fa-graduation-cap text-4xl text-white"></i>
@@ -38,98 +31,56 @@
         </div>
 
         <div class="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-
             <!-- Espace Admin -->
-            <a href="${pageContext.request.contextPath}/login.jsp"
-               class="card group bg-white rounded-3xl overflow-hidden shadow-xl flex flex-col h-full">
+            <a href="${pageContext.request.contextPath}/login.jsp" class="card group bg-white rounded-3xl overflow-hidden shadow-xl flex flex-col h-full">
                 <div class="h-2 bg-indigo-600"></div>
                 <div class="p-10 flex-1 flex flex-col items-center text-center">
                     <div class="w-20 h-20 bg-indigo-100 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition">
                         <i class="fas fa-user-shield text-4xl text-indigo-600"></i>
                     </div>
                     <h2 class="text-3xl font-bold text-gray-800 mb-3">Administrateur</h2>
-                    <p class="text-gray-600 mb-8 leading-relaxed">
-                        Accédez à l'espace de gestion complète :<br>
-                        <span class="font-medium">Étudiants, Logements, Paiements, Caravanes, Bureau...</span>
-                    </p>
-                    <div class="mt-auto">
-                        <button class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold px-10 py-4 rounded-2xl flex items-center gap-3 transition">
-                            <span>Accéder à l'espace Admin</span>
-                            <i class="fas fa-arrow-right"></i>
-                        </button>
-                    </div>
+                    <p class="text-gray-600 mb-8 leading-relaxed">Accédez à l'espace de gestion complète.</p>
                 </div>
             </a>
 
             <!-- Espace Étudiant -->
-            <a href="${pageContext.request.contextPath}/pages/connexionEtudiant.jsp"
-               class="card group bg-white rounded-3xl overflow-hidden shadow-xl flex flex-col h-full">
+            <a href="${pageContext.request.contextPath}/pages/connexionEtudiant.jsp" class="card group bg-white rounded-3xl overflow-hidden shadow-xl flex flex-col h-full">
                 <div class="h-2 bg-teal-600"></div>
                 <div class="p-10 flex-1 flex flex-col items-center text-center">
                     <div class="w-20 h-20 bg-teal-100 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition">
                         <i class="fas fa-user-graduate text-4xl text-teal-600"></i>
                     </div>
                     <h2 class="text-3xl font-bold text-gray-800 mb-3">Étudiant</h2>
-                    <p class="text-gray-600 mb-8 leading-relaxed">
-                        Inscrivez-vous aux caravanes, consultez vos paiements,<br>
-                        gérez votre logement et recevez vos reçus.
-                    </p>
-                    <div class="mt-auto">
-                        <button class="bg-teal-600 hover:bg-teal-700 text-white font-semibold px-10 py-4 rounded-2xl flex items-center gap-3 transition">
-                            <span>Accéder à l'espace Étudiant</span>
-                            <i class="fas fa-arrow-right"></i>
-                        </button>
-                    </div>
+                    <p class="text-gray-600 mb-8 leading-relaxed">Inscrivez-vous aux caravanes et gérez vos paiements.</p>
                 </div>
             </a>
-
-        </div>
-
-        <div class="text-center mt-12 text-white/70 text-sm">
-            © 2026 Amicale des Étudiants et Anciens de l'Université - AERD
         </div>
     </div>
 
-    <!-- Bouton Installation -->
-    <button id="btnInstall" class="fixed bottom-6 right-6 bg-white text-indigo-600 px-6 py-3 rounded-full shadow-2xl font-bold hidden items-center gap-2 hover:bg-indigo-50 transition border border-indigo-200 z-50">
+    <button id="btnInstall" class="fixed bottom-6 right-6 bg-white text-indigo-600 px-6 py-3 rounded-full shadow-2xl font-bold hidden items-center gap-2 z-50">
         <i class="fas fa-download"></i> Installer AERD
     </button>
 
     <script>
-        // Enregistrement du Service Worker (Chemin racine corrigé)
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js')
-                    .then(() => console.log('SW enregistré'))
-                    .catch(err => console.log('Erreur SW: ', err));
+                navigator.serviceWorker.register('${pageContext.request.contextPath}/sw.js')
+                    .catch(err => console.log('SW failed', err));
             });
         }
-
-        // Logique du bouton d'installation
         let deferredPrompt;
         const btnInstall = document.getElementById('btnInstall');
-
         window.addEventListener('beforeinstallprompt', (e) => {
             e.preventDefault();
             deferredPrompt = e;
             btnInstall.classList.remove('hidden');
             btnInstall.classList.add('flex');
         });
-
         btnInstall.addEventListener('click', () => {
             if (deferredPrompt) {
                 deferredPrompt.prompt();
-                deferredPrompt.userChoice.then((choiceResult) => {
-                    if (choiceResult.outcome === 'accepted') {
-                        btnInstall.classList.add('hidden');
-                    }
-                    deferredPrompt = null;
-                });
+                deferredPrompt.userChoice.then(() => btnInstall.classList.add('hidden'));
             }
-        });
-
-        window.addEventListener('appinstalled', () => {
-            btnInstall.classList.add('hidden');
         });
     </script>
 </body>
