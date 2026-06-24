@@ -2,7 +2,7 @@ const CACHE_NAME = 'aerd-v1';
 
 // Liste des fichiers à mettre en cache
 const ASSETS = [
-  '/acceuil.jsp',
+  '/accueil.jsp',
   '/manifest.json',
   '/icons/icon-192.jpg',
   '/icons/icon-512.jpg',

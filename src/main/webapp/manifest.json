@@ -2,7 +2,7 @@
   "name": "Amicale AERD",
   "short_name": "AERD",
   "description": "Plateforme de gestion électorale AERD",
-  "start_url": "/acceuil.jsp",
+  "start_url": "/accueil.jsp",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#2563eb",
