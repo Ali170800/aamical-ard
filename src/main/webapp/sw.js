@@ -1,19 +1,39 @@
-const CACHE_NAME = 'aerd-v1';
-const ASSETS = [
-  '/manifest.json',
-  '/icons/icon-192.jpg',
-  '/icons/icon-512.jpg'
+const CACHE_NAME = "aerd-v1";
+
+const urlsToCache = [
+  "/accueil.jsp",
+  "/login.jsp",
+  "/pages/connexionEtudiant.jsp",
+  "/"
 ];
 
-self.addEventListener('install', (e) => {
-  e.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(ASSETS)));
+self.addEventListener("install", event => {
+  event.waitUntil(
+    caches.open(CACHE_NAME).then(cache => cache.addAll(urlsToCache))
+  );
+  self.skipWaiting();
 });
 
-self.addEventListener('fetch', (e) => {
-  // On ne met pas en cache la page JSP, on va chercher sur le réseau directement
-  if (e.request.url.includes('.jsp')) {
-    e.respondWith(fetch(e.request));
-  } else {
-    e.respondWith(caches.match(e.request).then(res => res || fetch(e.request)));
-  }
+self.addEventListener("activate", event => {
+  event.waitUntil(
+    caches.keys().then(keys =>
+      Promise.all(keys.map(key => {
+        if (key !== CACHE_NAME) return caches.delete(key);
+      }))
+    )
+  );
+});
+
+self.addEventListener("fetch", event => {
+  if (event.request.method !== "GET") return;
+
+  event.respondWith(
+    fetch(event.request)
+      .then(res => {
+        const clone = res.clone();
+        caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+        return res;
+      })
+      .catch(() => caches.match(event.request))
+  );
 });

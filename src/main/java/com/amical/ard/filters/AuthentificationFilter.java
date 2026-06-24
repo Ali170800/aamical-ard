@@ -19,8 +19,6 @@ public class AuthentificationFilter implements Filter {
         HttpServletRequest request = (HttpServletRequest) req;
         HttpServletResponse response = (HttpServletResponse) res;
 
-        // 1. INITIALISATION SYSTÉMATIQUE DE L'ENTITY MANAGER
-        // On le fait AVANT toute vérification pour qu'il soit toujours disponible
         EntityManager em = EntityManagerHelper.getEntityManager();
         request.setAttribute("em", em);
 
@@ -29,17 +27,11 @@ public class AuthentificationFilter implements Filter {
             String uri = request.getRequestURI().toLowerCase();
             String contextPath = request.getContextPath();
 
-            // ======================================
-            // URLS PUBLIQUES
-            // ======================================
             if (isPublicUrl(uri, contextPath)) {
                 chain.doFilter(request, response);
                 return;
             }
 
-            // ======================================
-            // VÉRIFICATION CONNEXION
-            // ======================================
             boolean estConnecte = session != null
                     && (session.getAttribute("etudiantConnecte") != null
                     || session.getAttribute("etudiant") != null
@@ -49,14 +41,11 @@ public class AuthentificationFilter implements Filter {
                 if (uri.contains("etudiant")) {
                     response.sendRedirect(contextPath + "/pages/connexionEtudiant.jsp");
                 } else {
-                    response.sendRedirect(contextPath + "/acceuil.jsp");
+                    response.sendRedirect(contextPath + "/accueil.jsp"); // Corrigé ici
                 }
                 return;
             }
 
-            // ======================================
-            // PROTECTION ÉTUDIANT / ADMIN
-            // ======================================
             boolean estEtudiant = session.getAttribute("etudiantConnecte") != null
                     || "ETUDIANT".equals(session.getAttribute("userType"));
 
@@ -68,8 +57,6 @@ public class AuthentificationFilter implements Filter {
             chain.doFilter(request, response);
 
         } finally {
-            // 2. FERMETURE SYSTÉMATIQUE
-            // Même en cas d'erreur ou de redirection, on ferme la connexion ici
             if (em != null && em.isOpen()) {
                 em.close();
             }
@@ -80,8 +67,12 @@ public class AuthentificationFilter implements Filter {
         uri = uri.toLowerCase();
         String cp = contextPath.toLowerCase();
 
-        return uri.endsWith("/acceuil.jsp")
-                || uri.endsWith("/accueil.jsp")
+        // Ajout indispensable pour le fonctionnement de la PWA
+        if (uri.endsWith("/manifest.json") || uri.endsWith("/sw.js")) {
+            return true;
+        }
+
+        return uri.endsWith("/accueil.jsp") // Corrigé ici
                 || uri.equals(cp + "/")
                 || uri.endsWith("/login")
                 || uri.endsWith("/login.jsp")
