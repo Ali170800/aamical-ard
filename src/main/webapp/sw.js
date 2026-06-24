@@ -1,16 +1,18 @@
-const CACHE_NAME = "aerd-v1";
+const CACHE_NAME = "aerd-v3";
 
 const urlsToCache = [
   "/accueil.jsp",
   "/login.jsp",
   "/pages/connexionEtudiant.jsp",
-  "/"
+  "/manifest.json"
 ];
 
 self.addEventListener("install", event => {
   event.waitUntil(
     caches.open(CACHE_NAME).then(cache => {
       return cache.addAll(urlsToCache);
+    }).catch(err => {
+      console.log("Cache error:", err);
     })
   );
   self.skipWaiting();
@@ -35,11 +37,6 @@ self.addEventListener("fetch", event => {
 
   event.respondWith(
     fetch(event.request)
-      .then(res => {
-        const clone = res.clone();
-        caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
-        return res;
-      })
       .catch(() => caches.match(event.request))
   );
 });

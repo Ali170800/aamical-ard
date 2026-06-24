@@ -19,8 +19,14 @@
         body {
             background: linear-gradient(135deg, #1e3a8a, #3b82f6);
         }
-        .card { transition: 0.3s; }
-        .card:hover { transform: translateY(-10px); }
+
+        .card {
+            transition: 0.3s;
+        }
+
+        .card:hover {
+            transform: translateY(-10px);
+        }
     </style>
 </head>
 
@@ -49,29 +55,30 @@
 
 <!-- 🔥 BOUTON INSTALL -->
 <button id="installBtn"
-        class="fixed bottom-6 right-6 bg-white text-indigo-600 px-6 py-3 rounded-full shadow-xl hidden">
-    <i class="fas fa-download"></i> Installer AERD
+        class="fixed bottom-6 right-6 bg-white text-indigo-600 px-6 py-3 rounded-full shadow-xl hidden z-50">
+    📲 Installer AERD
 </button>
 
 <script>
 let deferredPrompt;
 const installBtn = document.getElementById("installBtn");
 
-// REGISTER SERVICE WORKER
+// SERVICE WORKER
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('${pageContext.request.contextPath}/sw.js')
         .then(() => console.log("SW OK"))
-        .catch(err => console.log(err));
+        .catch(err => console.log("SW ERROR", err));
 }
 
-// SHOW INSTALL BUTTON
+// Afficher bouton install quand Chrome autorise
 window.addEventListener("beforeinstallprompt", (e) => {
     e.preventDefault();
     deferredPrompt = e;
+
     installBtn.classList.remove("hidden");
 });
 
-// CLICK INSTALL
+// Click bouton install
 installBtn.addEventListener("click", async () => {
     if (!deferredPrompt) return;
 
