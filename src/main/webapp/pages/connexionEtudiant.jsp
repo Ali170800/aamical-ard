@@ -8,7 +8,8 @@
 </head>
 <body class="bg-gradient-to-r from-teal-50 to-white min-h-screen flex items-center justify-center p-4">
 
-<div class="w-full max-w-md bg-white p-8 rounded-3xl shadow-2xl">
+<!-- Conteneur fixe et stable -->
+<div class="w-full max-w-md bg-white p-8 rounded-3xl shadow-2xl overflow-hidden min-h-[500px]">
     <h2 class="text-2xl font-bold text-center text-teal-700 mb-8">🔑 Connexion Étudiant</h2>
 
     <c:if test="${param.success == 'dejaActive'}">

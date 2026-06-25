@@ -29,69 +29,117 @@
         em.close();
     }
 %>
+
 <!DOCTYPE html>
 <html lang="fr">
 <head>
     <title>Vote - <%= election != null ? election.getTitre() : "Chargement..." %></title>
+
+    <!-- RESPONSIVE VIEWPORT -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="p-10 bg-gray-50">
-    <div class="max-w-2xl mx-auto">
+
+<body class="bg-gray-50 px-4 py-6 sm:px-6 md:px-8 lg:px-10">
+    <div class="max-w-2xl mx-auto w-full">
+
         <% String status = request.getParameter("status");
-           if("success".equals(status)) { %><div class="bg-green-100 text-green-700 p-4 rounded mb-6">✅ Vote pris en compte !</div><% }
-           else if("deja".equals(status)) { %><div class="bg-red-100 text-red-700 p-4 rounded mb-6">❌ Déjà voté.</div><% }
-           else if("ferme".equals(status)) { %><div class="bg-red-100 text-red-700 p-4 rounded mb-6">❌ Le scrutin est clos.</div><% } %>
+           if("success".equals(status)) { %>
+            <div class="bg-green-100 text-green-700 p-4 rounded mb-6">
+                ✅ Vote pris en compte !
+            </div>
+        <% }
+           else if("deja".equals(status)) { %>
+            <div class="bg-red-100 text-red-700 p-4 rounded mb-6">
+                ❌ Déjà voté.
+            </div>
+        <% }
+           else if("ferme".equals(status)) { %>
+            <div class="bg-red-100 text-red-700 p-4 rounded mb-6">
+                ❌ Le scrutin est clos.
+            </div>
+        <% } %>
 
-        <h1 class="text-3xl font-bold mb-4"><%= election != null ? election.getTitre() : "Chargement..." %></h1>
+        <h1 class="text-2xl sm:text-3xl font-bold mb-4 break-words">
+            <%= election != null ? election.getTitre() : "Chargement..." %>
+        </h1>
 
-        <div class="bg-white p-4 rounded-xl shadow border-l-4 border-indigo-600 mb-8 flex justify-between items-center">
+        <div class="bg-white p-4 rounded-xl shadow border-l-4 border-indigo-600 mb-8 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
             <p class="font-bold text-gray-700">Temps restant :</p>
-            <span class="text-indigo-600 font-black text-lg"><%= tempsRestant %></span>
+            <span class="text-indigo-600 font-black text-base sm:text-lg">
+                <%= tempsRestant %>
+            </span>
         </div>
 
         <div class="space-y-4 mb-12">
             <% if (election != null && election.getCandidats() != null) {
                 for(CandidatElection c : election.getCandidats()) { %>
-                <div class="bg-white p-6 rounded-xl shadow border flex justify-between items-center">
-                    <p class="font-bold text-lg"><%= c.getPrenom() %> <%= c.getNom() %></p>
+
+                <div class="bg-white p-4 sm:p-6 rounded-xl shadow border flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+
+                    <p class="font-bold text-base sm:text-lg text-center sm:text-left break-words">
+                        <%= c.getPrenom() %> <%= c.getNom() %>
+                    </p>
+
                     <% if (estTermine) { %>
-                        <button disabled class="bg-gray-300 text-white px-6 py-2 rounded-lg font-bold cursor-not-allowed">Scrutin clos</button>
+                        <button disabled
+                            class="w-full sm:w-auto bg-gray-300 text-white px-6 py-2 rounded-lg font-bold cursor-not-allowed">
+                            Scrutin clos
+                        </button>
                     <% } else { %>
-                        <form action="<%= request.getContextPath() %>/api/voter" method="POST">
+                        <form action="<%= request.getContextPath() %>/api/voter" method="POST" class="w-full sm:w-auto">
                             <input type="hidden" name="electionId" value="<%= election.getId() %>">
                             <input type="hidden" name="candidatId" value="<%= c.getId() %>">
-                            <button type="submit" class="bg-indigo-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-indigo-700">Voter</button>
+
+                            <button type="submit"
+                                class="w-full sm:w-auto bg-indigo-600 text-white px-6 py-2 rounded-lg font-bold hover:bg-indigo-700 transition">
+                                Voter
+                            </button>
                         </form>
                     <% } %>
+
                 </div>
+
             <% } } %>
         </div>
 
-        <!-- Section Résultats en temps réel -->
-        <div class="bg-white p-8 rounded-3xl shadow-sm border border-gray-200">
-            <h2 class="text-xl font-black mb-6">Résultats en temps réel</h2>
+        <!-- RESULTATS -->
+        <div class="bg-white p-4 sm:p-6 md:p-8 rounded-3xl shadow-sm border border-gray-200">
+            <h2 class="text-lg sm:text-xl font-black mb-6">
+                Résultats en temps réel
+            </h2>
+
             <div class="space-y-6">
+
                 <% if (election != null && election.getCandidats() != null) {
                     EntityManager emResultats = EntityManagerHelper.getEntityManager();
                     VoteElectionDAO vDaoRes = new VoteElectionDAO(emResultats);
+
                     for(CandidatElection c : election.getCandidats()) {
                         long nbVoix = vDaoRes.compterVotesPourCandidat(c.getId(), election.getId());
                         int pourcentage = (totalVotes > 0) ? (int)((nbVoix * 100) / totalVotes) : 0;
                 %>
-                    <div>
-                        <div class="flex justify-between text-xs font-bold mb-2">
-                            <span><%= c.getPrenom() %> <%= c.getNom() %></span>
-                            <span><%= pourcentage %>% (<%= nbVoix %> voix)</span>
-                        </div>
-                        <div class="w-full bg-gray-100 rounded-full h-4">
-                            <div class="bg-indigo-600 h-4 rounded-full" style="width: <%= pourcentage %>%"></div>
-                        </div>
+
+                <div>
+                    <div class="flex flex-col sm:flex-row sm:justify-between text-xs font-bold mb-2 gap-1">
+                        <span><%= c.getPrenom() %> <%= c.getNom() %></span>
+                        <span><%= pourcentage %>% (<%= nbVoix %> voix)</span>
                     </div>
-                <%  }
+
+                    <div class="w-full bg-gray-100 rounded-full h-4 overflow-hidden">
+                        <div class="bg-indigo-600 h-4 rounded-full"
+                             style="width: <%= pourcentage %>%"></div>
+                    </div>
+                </div>
+
+                <% }
                     emResultats.close();
                 } %>
+
             </div>
         </div>
+
     </div>
 </body>
 </html>

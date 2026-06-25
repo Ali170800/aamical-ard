@@ -2,7 +2,10 @@
 <html>
 <head>
     <title>Connexion Administrateur - Amicale AERD</title>
+    <!-- Ajout du viewport pour le mobile -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <script src="https://cdn.tailwindcss.com"></script>
+
     <style>
         .tab-active { border-bottom: 3px solid #4f46e5; color: #4f46e5; font-weight: 600; }
         .forgot-link { text-align: right; margin-top: 12px; }
@@ -10,33 +13,43 @@
         .forgot-link a:hover { text-decoration: underline; }
     </style>
 </head>
+
 <body class="bg-gradient-to-br from-slate-900 to-indigo-950 min-h-screen flex items-center justify-center p-4">
 
+<!-- Conteneur responsive : w-full prend toute la place, max-w-md limite la taille sur PC -->
 <div class="w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden">
+
+    <!-- HEADER -->
     <div class="bg-indigo-700 text-white p-8 text-center">
         <h1 class="text-3xl font-bold">Amicale AERD</h1>
         <p class="text-indigo-100 mt-1">Espace Administrateur</p>
     </div>
 
+    <!-- CONTENU -->
     <div class="p-6 md:p-8">
+
         <%
             String erreurMsg = (String) request.getSession().getAttribute("erreur");
             String successMsg = (String) request.getSession().getAttribute("success");
         %>
+
         <% if (erreurMsg != null) { %>
-            <div class="bg-red-100 border border-red-400 text-red-700 px-5 py-4 rounded-2xl mb-6">❌ <%= erreurMsg %></div>
-            <% request.getSession().removeAttribute("erreur"); %>
-        <% } %>
-        <% if (successMsg != null) { %>
-            <div class="bg-green-100 border border-green-400 text-green-700 px-5 py-4 rounded-2xl mb-6">✅ <%= successMsg %></div>
-            <% request.getSession().removeAttribute("success"); %>
+        <div class="bg-red-100 border border-red-400 text-red-700 px-5 py-4 rounded-2xl mb-6">❌ <%= erreurMsg %></div>
+        <% request.getSession().removeAttribute("erreur"); %>
         <% } %>
 
+        <% if (successMsg != null) { %>
+        <div class="bg-green-100 border border-green-400 text-green-700 px-5 py-4 rounded-2xl mb-6">✅ <%= successMsg %></div>
+        <% request.getSession().removeAttribute("success"); %>
+        <% } %>
+
+        <!-- ONGLETS -->
         <div class="flex border-b mb-6">
             <button type="button" onclick="showTab(0)" id="tab1" class="tab-active flex-1 py-3 text-center">Se Connecter</button>
             <button type="button" onclick="showTab(1)" id="tab2" class="flex-1 py-3 text-center text-slate-500">Activer Compte</button>
         </div>
 
+        <!-- ===================== CONNEXION ===================== -->
         <div id="loginForm">
             <form action="${pageContext.request.contextPath}/login" method="post">
                 <div class="mb-5">
@@ -47,11 +60,14 @@
                     <label class="block text-slate-600 mb-2 font-medium">Mot de passe</label>
                     <input type="password" name="motDePasse" required class="w-full px-4 py-3 border border-slate-300 rounded-2xl">
                 </div>
-                <div class="forgot-link"><a href="${pageContext.request.contextPath}/pages/auth/motDePasseOublie.jsp">Mot de passe oublié ?</a></div>
+                <div class="forgot-link">
+                    <a href="${pageContext.request.contextPath}/pages/auth/motDePasseOublie.jsp">Mot de passe oublié ?</a>
+                </div>
                 <button type="submit" class="w-full mt-6 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-4 rounded-2xl">Se connecter</button>
             </form>
         </div>
 
+        <!-- ===================== ACTIVATION ===================== -->
         <div id="activationForm" class="hidden">
             <form id="step1Form" action="${pageContext.request.contextPath}/admin/verifier" method="post">
                 <div class="mb-5">
@@ -92,6 +108,7 @@
         document.getElementById("activationForm").classList.add("hidden");
         document.getElementById("tab1").classList.remove("tab-active");
         document.getElementById("tab2").classList.remove("tab-active");
+
         if (tab === 0) {
             document.getElementById("loginForm").classList.remove("hidden");
             document.getElementById("tab1").classList.add("tab-active");
@@ -100,6 +117,7 @@
             document.getElementById("tab2").classList.add("tab-active");
         }
     }
+
     window.onload = function () {
         <% if (request.getAttribute("activationReady") != null) { %>
         showTab(1);
@@ -109,5 +127,6 @@
         <% } %>
     }
 </script>
+
 </body>
 </html>
