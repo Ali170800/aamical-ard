@@ -3,22 +3,27 @@
 
 <html>
 <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Liste des étudiants logés</title>
+
     <style>
         table {
-            width: 90%;
-            margin: 20px auto;
+            width: 100%;
             border-collapse: collapse;
+            min-width: 800px;
         }
+
         th, td {
             padding: 12px;
             border: 1px solid #aaa;
             text-align: left;
         }
+
         th {
             background-color: #0077cc;
             color: white;
         }
+
         .btn-supprimer {
             background-color: #dc3545;
             color: white;
@@ -27,42 +32,83 @@
             border-radius: 4px;
             cursor: pointer;
         }
+
         .filters {
-            width: 90%;
+            width: 100%;
             margin: 20px auto;
             display: flex;
             gap: 15px;
             align-items: center;
             flex-wrap: wrap;
         }
+
         .stats {
-            width: 90%;
+            width: 100%;
             margin: 20px auto;
             background: #f8f9fa;
             padding: 15px;
             border-radius: 8px;
             border: 1px solid #ddd;
         }
+
         .search-input {
             padding: 10px;
-            width: 350px;
+            width: 100%;
+            max-width: 350px;
             font-size: 16px;
             border: 1px solid #ccc;
             border-radius: 6px;
         }
+
         .btn {
             padding: 10px 15px;
             text-decoration: none;
             border-radius: 5px;
             color: white;
             margin-right: 8px;
+            display: inline-block;
+        }
+
+        /* ✅ RESPONSIVE IMPORTANT */
+        .table-wrapper {
+            width: 100%;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        @media (max-width: 768px) {
+
+            body {
+                padding: 10px;
+            }
+
+            .filters {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .btn {
+                width: 100%;
+                margin-bottom: 10px;
+                text-align: center;
+            }
+
+            .search-input {
+                max-width: 100%;
+            }
+
+            table {
+                font-size: 13px;
+            }
         }
     </style>
 </head>
+
 <body>
 
-<div style="width: 90%; margin: 20px auto; display: flex; justify-content: space-between; align-items: center;">
+<div style="width: 100%; margin: 20px auto; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
     <h2>Étudiants Logés</h2>
+
     <div>
         <a href="<%= request.getContextPath() %>/formulaire-logement"
            style="background:#28a745;" class="btn">
@@ -74,7 +120,6 @@
             📄 Exporter en PDF
         </a>
 
-        <!-- ✅ Bouton corrigé (redirige selon rôle) -->
         <a href="<%= request.getContextPath() %>/redirect-to-dashboard"
            style="background:#6c757d;" class="btn">
             🏠 Retour au menu
@@ -82,13 +127,15 @@
     </div>
 </div>
 
-<!-- Filtres -->
+<!-- FILTRES -->
 <div class="filters">
-    <form method="get" action="<%= request.getContextPath() %>/liste-logements">
-        <select name="appartementId" onchange="this.form.submit()">
+    <form method="get" action="<%= request.getContextPath() %>/liste-logements" style="width:100%">
+
+        <select name="appartementId" onchange="this.form.submit()" style="width:100%; padding:10px; margin-bottom:10px;">
             <option value="tous" ${empty appartementIdSelectionne || appartementIdSelectionne == 'tous' ? 'selected' : ''}>
                 Tous les appartements
             </option>
+
             <c:forEach var="app" items="${appartements}">
                 <option value="${app.id}" ${appartementIdSelectionne == app.id.toString() ? 'selected' : ''}>
                     ${app.nomAppartement}
@@ -102,11 +149,14 @@
                class="search-input"
                onkeyup="filtrerTable()">
 
-        <button type="submit" style="padding:10px 20px;">Filtrer</button>
+        <button type="submit" style="padding:10px 20px; margin-top:10px;">Filtrer</button>
+
     </form>
 </div>
 
-<!-- Tableau -->
+<!-- TABLE RESPONSIVE -->
+<div class="table-wrapper">
+
 <table>
     <thead>
         <tr>
@@ -119,6 +169,7 @@
             <th>Action</th>
         </tr>
     </thead>
+
     <tbody>
     <c:forEach var="logement" items="${logements}">
         <tr>
@@ -132,7 +183,9 @@
                 <form action="supprimer-logement" method="post" style="display:inline;">
                     <input type="hidden" name="id" value="${logement.id}" />
                     <button type="submit" class="btn-supprimer"
-                            onclick="return confirm('Supprimer ce logement ?')">Supprimer</button>
+                            onclick="return confirm('Supprimer ce logement ?')">
+                        Supprimer
+                    </button>
                 </form>
             </td>
         </tr>
@@ -140,7 +193,9 @@
     </tbody>
 </table>
 
-<!-- Résumé par appartement -->
+</div>
+
+<!-- STATS -->
 <div class="stats">
     <h3>Résumé par Appartement</h3>
     <ul>
@@ -148,26 +203,26 @@
             <li><strong>${entry.key}</strong> : ${entry.value} étudiant(s)</li>
         </c:forEach>
     </ul>
+
     <p><strong>Total :</strong> ${logements.size()} étudiants logés</p>
 </div>
 
 <script>
-    function filtrerTable() {
-        const input = document.getElementById("recherche").value.toLowerCase().trim();
-        const rows = document.querySelectorAll("tbody tr");
+function filtrerTable() {
+    const input = document.getElementById("recherche").value.toLowerCase().trim();
+    const rows = document.querySelectorAll("tbody tr");
 
-        rows.forEach(row => {
-            const nom = (row.cells[0] ? row.cells[0].textContent : "").toLowerCase();
-            const prenom = (row.cells[1] ? row.cells[1].textContent : "").toLowerCase();
-            const appartement = (row.cells[4] ? row.cells[4].textContent : "").toLowerCase();
+    rows.forEach(row => {
+        const nom = row.cells[0] ? row.cells[0].textContent.toLowerCase() : "";
+        const prenom = row.cells[1] ? row.cells[1].textContent.toLowerCase() : "";
+        const appartement = row.cells[4] ? row.cells[4].textContent.toLowerCase() : "";
 
-            if (nom.includes(input) || prenom.includes(input) || appartement.includes(input)) {
-                row.style.display = "";
-            } else {
-                row.style.display = "none";
-            }
-        });
-    }
+        row.style.display =
+            (nom.includes(input) || prenom.includes(input) || appartement.includes(input))
+            ? ""
+            : "none";
+    });
+}
 </script>
 
 </body>

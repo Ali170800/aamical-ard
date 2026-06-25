@@ -5,6 +5,9 @@
 <head>
     <title>Validation du Code Étudiant - Amicale AERD</title>
 
+    <!-- RESPONSIVE VIEWPORT -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <script src="https://cdn.tailwindcss.com"></script>
 
     <style>
@@ -18,12 +21,10 @@
         }
 
         @keyframes fadeIn {
-
             from {
                 opacity: 0;
                 transform: translateY(20px);
             }
-
             to {
                 opacity: 1;
                 transform: translateY(0);
@@ -54,54 +55,46 @@
 
 <body class="bg-gradient-to-br from-slate-900 via-indigo-900 to-slate-950 min-h-screen flex items-center justify-center p-4">
 
-<div class="w-full max-w-md bg-white rounded-[30px] shadow-2xl overflow-hidden fade-animation">
+<div class="w-full max-w-md sm:max-w-lg bg-white rounded-[30px] shadow-2xl overflow-hidden fade-animation">
 
     <!-- HEADER -->
-    <div class="bg-gradient-to-r from-indigo-700 to-indigo-900 text-white p-10 text-center">
+    <div class="bg-gradient-to-r from-indigo-700 to-indigo-900 text-white p-8 sm:p-10 text-center">
 
-        <div class="text-5xl mb-4">
+        <div class="text-4xl sm:text-5xl mb-4">
             📩
         </div>
 
-        <h1 class="text-3xl font-extrabold">
+        <h1 class="text-2xl sm:text-3xl font-extrabold break-words">
             Amicale AERD
         </h1>
 
-        <p class="text-indigo-100 mt-3">
+        <p class="text-indigo-100 mt-3 text-sm sm:text-base">
             Validation du code étudiant
         </p>
 
     </div>
 
     <!-- CONTENU -->
-    <div class="p-8">
+    <div class="p-6 sm:p-8">
 
         <!-- MESSAGE ERREUR -->
         <c:if test="${not empty erreur}">
-
-            <div class="bg-red-100 border border-red-400 text-red-700 px-5 py-4 rounded-2xl mb-6">
-
+            <div class="bg-red-100 border border-red-400 text-red-700 px-4 sm:px-5 py-3 sm:py-4 rounded-2xl mb-6 text-sm sm:text-base">
                 ❌ ${erreur}
-
             </div>
-
         </c:if>
 
         <!-- MESSAGE SUCCÈS -->
         <c:if test="${not empty success}">
-
-            <div class="bg-green-100 border border-green-400 text-green-700 px-5 py-4 rounded-2xl mb-6">
-
+            <div class="bg-green-100 border border-green-400 text-green-700 px-4 sm:px-5 py-3 sm:py-4 rounded-2xl mb-6 text-sm sm:text-base">
                 ✅ ${success}
-
             </div>
-
         </c:if>
 
         <!-- TEXTE -->
         <div class="text-center mb-6">
 
-            <p class="text-slate-600 leading-relaxed">
+            <p class="text-slate-600 leading-relaxed text-sm sm:text-base px-2">
                 Entrez le code de vérification envoyé à votre adresse email.
             </p>
 
@@ -113,7 +106,7 @@
 
             <div class="mb-8">
 
-                <label class="block text-slate-700 font-semibold mb-2">
+                <label class="block text-slate-700 font-semibold mb-2 text-sm sm:text-base">
 
                     Code de vérification
 
@@ -124,13 +117,13 @@
                        placeholder="Entrez le code reçu"
                        required
                        maxlength="6"
-                       class="input-style w-full px-5 py-4 border border-slate-300 rounded-2xl text-center text-2xl tracking-[10px] focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                       class="input-style w-full px-4 sm:px-5 py-3 sm:py-4 border border-slate-300 rounded-2xl text-center text-xl sm:text-2xl tracking-[6px] sm:tracking-[10px] focus:outline-none focus:ring-2 focus:ring-indigo-500">
 
             </div>
 
             <!-- BOUTON -->
             <button type="submit"
-                    class="btn-style w-full bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white font-bold py-4 rounded-2xl shadow-xl text-lg">
+                    class="btn-style w-full bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-700 hover:to-indigo-800 text-white font-bold py-3 sm:py-4 rounded-2xl shadow-xl text-base sm:text-lg">
 
                 Vérifier le code
 
@@ -142,7 +135,7 @@
         <div class="text-center mt-8">
 
             <a href="${pageContext.request.contextPath}/pages/auth/motDePasseOublieEtudiant.jsp"
-               class="text-indigo-600 hover:text-indigo-800 font-semibold">
+               class="text-indigo-600 hover:text-indigo-800 font-semibold text-sm sm:text-base">
 
                 ← Retour
 

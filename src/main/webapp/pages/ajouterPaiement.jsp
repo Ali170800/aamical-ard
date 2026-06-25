@@ -8,163 +8,55 @@
             (List<LogementEtudiant>) request.getAttribute("logements");
 %>
 
+<!DOCTYPE html>
 <html>
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>💸 Ajouter un Paiement</title>
 
-    <style>
-        body {
-            font-family: 'Segoe UI', sans-serif;
-            background: #f4f7f9;
-            margin: 0;
-            padding: 20px;
-        }
-
-        .container {
-            max-width: 900px;
-            margin: 40px auto;
-            background: white;
-            padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
-        }
-
-        h2 {
-            text-align: center;
-            color: #006699;
-            margin-bottom: 25px;
-        }
-
-        .search-box {
-            width: 100%;
-            padding: 12px;
-            margin-bottom: 20px;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            font-size: 16px;
-        }
-
-        .students-list {
-            max-height: 450px;
-            overflow-y: auto;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            padding: 10px;
-            background: #fafafa;
-        }
-
-        .student-item {
-            padding: 12px;
-            margin: 6px 0;
-            background: white;
-            border-radius: 6px;
-            border: 1px solid #eee;
-        }
-
-        select,
-        input[type="number"] {
-            width: 100%;
-            padding: 12px;
-            margin: 10px 0 20px 0;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-        }
-
-        input[type="submit"] {
-            width: 100%;
-            padding: 14px;
-            background-color: #006699;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-
-        input[type="submit"]:hover {
-            background-color: #004d66;
-        }
-
-        .top-bar {
-            margin-bottom: 20px;
-            text-align: right;
-        }
-
-        /* ========================= */
-        /* AJOUT MESSAGE ERREUR/SUCCÈS */
-        /* ========================= */
-
-        .message-error {
-            background: #f8d7da;
-            color: #721c24;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            border: 1px solid #f5c6cb;
-            line-height: 1.7;
-        }
-
-        .message-success {
-            background: #d4edda;
-            color: #155724;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            border: 1px solid #c3e6cb;
-            line-height: 1.7;
-        }
-    </style>
+    <script src="https://cdn.tailwindcss.com"></script>
 </head>
 
-<body>
+<body class="bg-gray-100 p-4 sm:p-6 md:p-10">
 
-<div class="top-bar">
+<!-- TOP BAR -->
+<div class="flex justify-end mb-4">
     <a href="<%= request.getContextPath() %>/listePaiements"
-       style="padding:10px 20px; background:#006699; color:white; text-decoration:none; border-radius:6px;">
+       class="px-4 sm:px-5 py-2 bg-blue-700 hover:bg-blue-800 text-white text-sm font-semibold rounded-lg shadow">
         Voir les paiements
     </a>
 </div>
 
-<div class="container">
+<!-- CONTAINER -->
+<div class="max-w-4xl mx-auto bg-white p-5 sm:p-8 rounded-2xl shadow">
 
-    <h2>💸 Ajouter un Paiement</h2>
+    <h2 class="text-xl sm:text-2xl font-bold text-center text-blue-700 mb-6">
+        💸 Ajouter un Paiement
+    </h2>
 
-    <!-- ========================= -->
-    <!-- MESSAGE D'ERREUR -->
-    <!-- ========================= -->
-
+    <!-- MESSAGE ERROR -->
     <%
-        String error =
-                (String) session.getAttribute("error");
-
+        String error = (String) session.getAttribute("error");
         if (error != null) {
     %>
-
-        <div class="message-error">
+        <div class="bg-red-100 text-red-700 p-4 rounded-lg mb-4 text-sm sm:text-base">
             <%= error %>
         </div>
-
     <%
             session.removeAttribute("error");
         }
     %>
 
-    <!-- ========================= -->
-    <!-- MESSAGE SUCCÈS -->
-    <!-- ========================= -->
-
+    <!-- MESSAGE SUCCESS -->
     <%
-        String success =
-                (String) session.getAttribute("success");
-
+        String success = (String) session.getAttribute("success");
         if (success != null) {
     %>
-
-        <div class="message-success">
+        <div class="bg-green-100 text-green-700 p-4 rounded-lg mb-4 text-sm sm:text-base">
             <%= success %>
         </div>
-
     <%
             session.removeAttribute("success");
         }
@@ -173,21 +65,20 @@
     <form action="<%= request.getContextPath() %>/ajouterPaiement"
           method="post">
 
-        <!-- Recherche dynamique -->
-        <input
-                type="text"
-                id="searchInput"
-                class="search-box"
-                placeholder="Rechercher par nom, prénom, téléphone..."
-                onkeyup="filterStudents()"
-        >
+        <!-- SEARCH -->
+        <input type="text"
+               id="searchInput"
+               class="w-full p-3 border rounded-lg mb-4 text-sm sm:text-base"
+               placeholder="Rechercher par nom, prénom, téléphone..."
+               onkeyup="filterStudents()">
 
-        <!-- Liste des étudiants -->
-        <label>
-            <strong>Sélectionnez les étudiants à payer :</strong>
+        <!-- LISTE ETUDIANTS -->
+        <label class="block mb-2 font-semibold text-sm sm:text-base">
+            Sélectionnez les étudiants à payer :
         </label>
 
-        <div class="students-list" id="studentsList">
+        <div id="studentsList"
+             class="max-h-72 sm:max-h-96 overflow-y-auto border rounded-lg bg-gray-50 p-2">
 
             <%
                 if (logements != null) {
@@ -196,37 +87,32 @@
 
                         Etudiant e = l.getEtudiant();
 
-                        if (e == null) {
-                            continue;
-                        }
+                        if (e == null) continue;
             %>
 
-            <div class="student-item">
+            <div class="student-item bg-white border rounded-lg p-3 mb-2">
 
-                <label>
+                <label class="flex items-center gap-3">
 
-                    <input
-                            type="checkbox"
-                            name="etudiantIds"
-                            value="<%= e.getId() %>"
-                    >
+                    <input type="checkbox"
+                           name="etudiantIds"
+                           value="<%= e.getId() %>"
+                           class="w-4 h-4">
 
-                    <strong>
-                        <%= e.getPrenom() %>
-                        <%= e.getNom() %>
-                    </strong>
+                    <div class="flex flex-col sm:flex-row sm:items-center sm:gap-2">
 
-                    -
-                    <%= e.getTelephone() != null
-                            ? e.getTelephone()
-                            : "" %>
+                        <span class="font-bold text-gray-800 text-sm sm:text-base">
+                            <%= e.getPrenom() %> <%= e.getNom() %>
+                        </span>
 
-                    <small
-                            style="margin-left:auto;color:#666;"
-                    >
-                        <%= l.getAppartement() != null
-                                ? l.getAppartement().getNomAppartement()
-                                : "" %>
+                        <span class="text-gray-500 text-xs sm:text-sm">
+                            <%= e.getTelephone() != null ? e.getTelephone() : "" %>
+                        </span>
+
+                    </div>
+
+                    <small class="ml-auto text-xs text-gray-500">
+                        <%= l.getAppartement() != null ? l.getAppartement().getNomAppartement() : "" %>
                     </small>
 
                 </label>
@@ -241,104 +127,73 @@
         </div>
 
         <!-- MOIS -->
+        <label class="block mt-5 mb-1 font-semibold text-sm sm:text-base">📅 Mois</label>
 
-        <label for="mois">📅 Mois :</label>
+        <select name="mois"
+                required
+                class="w-full p-3 border rounded-lg mb-4 text-sm sm:text-base">
 
-        <select name="mois" required>
-
-            <option value="">
-                -- Sélectionner le mois --
-            </option>
+            <option value="">-- Sélectionner le mois --</option>
 
             <% for (int i = 1; i <= 12; i++) { %>
-
-                <option value="<%= i %>">
-                    <%= i %>
-                </option>
-
+                <option value="<%= i %>"><%= i %></option>
             <% } %>
 
         </select>
 
-        <!-- ANNÉE -->
+        <!-- ANNEE -->
+        <label class="block mb-1 font-semibold text-sm sm:text-base">📆 Année</label>
 
-        <label for="annee">📆 Année :</label>
-
-        <input
-                type="number"
-                name="annee"
-                placeholder="ex: 2026"
-                required
-        />
+        <input type="number"
+               name="annee"
+               placeholder="ex: 2026"
+               required
+               class="w-full p-3 border rounded-lg mb-4 text-sm sm:text-base">
 
         <!-- MONTANT -->
+        <label class="block mb-1 font-semibold text-sm sm:text-base">💵 Montant (FCFA)</label>
 
-        <label for="montant">
-            💵 Montant (FCFA) :
-        </label>
-
-        <input
-                type="number"
-                name="montant"
-                step="0.01"
-                required
-        />
+        <input type="number"
+               name="montant"
+               step="0.01"
+               required
+               class="w-full p-3 border rounded-lg mb-4 text-sm sm:text-base">
 
         <!-- STATUT -->
+        <label class="block mb-1 font-semibold text-sm sm:text-base">✅ Statut</label>
 
-        <label for="statut">
-            ✅ Statut du paiement :
-        </label>
+        <select name="statut"
+                required
+                class="w-full p-3 border rounded-lg mb-6 text-sm sm:text-base">
 
-        <select name="statut" required>
-
-            <option value="">
-                -- Sélectionner --
-            </option>
-
-            <option value="PAYE">
-                Payé
-            </option>
-
-            <option value="IMPAYE">
-                Impayé
-            </option>
+            <option value="">-- Sélectionner --</option>
+            <option value="PAYE">Payé</option>
+            <option value="IMPAYE">Impayé</option>
 
         </select>
 
-        <input
-                type="submit"
-                value="💾 Enregistrer le(s) paiement(s)"
-        />
+        <!-- SUBMIT -->
+        <button type="submit"
+                class="w-full bg-blue-700 hover:bg-blue-800 text-white font-bold py-3 rounded-xl">
+
+            💾 Enregistrer le(s) paiement(s)
+
+        </button>
 
     </form>
 
 </div>
 
 <script>
-
 function filterStudents() {
-
-    const input =
-        document.getElementById("searchInput")
-            .value
-            .toLowerCase();
-
-    const items =
-        document.querySelectorAll(".student-item");
+    const input = document.getElementById("searchInput").value.toLowerCase();
+    const items = document.querySelectorAll(".student-item");
 
     items.forEach(item => {
-
-        const text =
-            item.textContent.toLowerCase();
-
-        item.style.display =
-            text.includes(input)
-                ? "block"
-                : "none";
+        const text = item.textContent.toLowerCase();
+        item.style.display = text.includes(input) ? "block" : "none";
     });
 }
-
 </script>
 
 </body>
