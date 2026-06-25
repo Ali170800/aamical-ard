@@ -54,7 +54,7 @@
         <a href="<%= request.getContextPath() %>/pco-dashboard" class="menu-item flex items-center gap-3 px-4 py-3 hover:bg-gray-800 rounded-xl"><i class="fas fa-home"></i> Tableau de bord</a>
 
         <div class="px-3 py-2 text-xs text-gray-400 uppercase mt-2">Communauté</div>
-        <a href="<%= request.getContextPath() %>/pages/publication/ajouterPublication.jsp" class="menu-item flex items-center gap-3 px-4 py-3 hover:bg-gray-800 rounded-xl"><i class="fas fa-image"></i> Ajouter publication</a>
+        <a href="<%= request.getContextPath() %>/upload/ajouterPublication.jsp" class="menu-item flex items-center gap-3 px-4 py-3 hover:bg-gray-800 rounded-xl"><i class="fas fa-image"></i> Ajouter publication</a>
         <a href="<%= request.getContextPath() %>/liste-publications" class="menu-item flex items-center gap-3 px-4 py-3 hover:bg-gray-800 rounded-xl"><i class="fas fa-newspaper"></i> Voir publications</a>
 
         <div class="px-3 py-2 text-xs text-gray-400 uppercase mt-2">Caravanes</div>
