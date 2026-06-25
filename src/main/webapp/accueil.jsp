@@ -3,6 +3,16 @@
 <head>
     <title>Bienvenue - Amicale AERD</title>
 
+    <!-- Splash Screen CSS -->
+    <style>
+        #splash-screen {
+            position: fixed; inset: 0; z-index: 9999;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            background: #1e3a8a;
+        }
+        .fade-out { opacity: 0; transition: opacity 0.4s ease-out; pointer-events: none; }
+    </style>
+
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
 
@@ -21,6 +31,18 @@
     </style>
 </head>
 <body class="min-h-screen flex items-center justify-center p-6">
+
+    <!-- Splash Screen HTML -->
+    <div id="splash-screen">
+        <div class="text-center flex flex-col items-center justify-center h-full">
+            <img src="${pageContext.request.contextPath}/icons/icon-192.jpg"
+                 alt="Logo AERD"
+                 class="w-20 h-20 mb-6 object-contain rounded-2xl shadow-lg">
+            <div class="w-12 h-1 bg-white/20 rounded-full overflow-hidden">
+                <div class="h-full bg-white animate-pulse" style="width: 60%"></div>
+            </div>
+        </div>
+    </div>
 
     <div class="max-w-5xl w-full">
         <div class="text-center mb-12">
@@ -85,6 +107,13 @@
     </button>
 
     <script>
+        // Splash Screen Logic
+        window.addEventListener('load', function() {
+            const splash = document.getElementById('splash-screen');
+            splash.classList.add('fade-out');
+            setTimeout(() => splash.style.display = 'none', 400);
+        });
+
         // Enregistrement Service Worker
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
