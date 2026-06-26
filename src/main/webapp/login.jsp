@@ -2,7 +2,6 @@
 <html>
 <head>
     <title>Connexion Administrateur - Amicale AERD</title>
-    <!-- Ajout du viewport pour le mobile -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <script src="https://cdn.tailwindcss.com"></script>
 
@@ -11,21 +10,31 @@
         .forgot-link { text-align: right; margin-top: 12px; }
         .forgot-link a { color: #4f46e5; font-size: 14px; font-weight: 600; text-decoration: none; }
         .forgot-link a:hover { text-decoration: underline; }
+        /* Style pour le bouton sortie */
+        .btn-sortie {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            color: #94a3b8;
+            font-size: 14px;
+            font-weight: bold;
+            z-index: 10;
+        }
+        .btn-sortie:hover { color: #4f46e5; }
     </style>
 </head>
 
 <body class="bg-gradient-to-br from-slate-900 to-indigo-950 min-h-screen flex items-center justify-center p-4">
 
-<!-- Conteneur responsive : w-full prend toute la place, max-w-md limite la taille sur PC -->
-<div class="w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden">
+<div class="w-full max-w-md bg-white rounded-3xl shadow-2xl overflow-hidden relative">
 
-    <!-- HEADER -->
+    <a href="${pageContext.request.contextPath}/index.jsp" class="btn-sortie">Sortie</a>
+
     <div class="bg-indigo-700 text-white p-8 text-center">
         <h1 class="text-3xl font-bold">Amicale AERD</h1>
         <p class="text-indigo-100 mt-1">Espace Administrateur</p>
     </div>
 
-    <!-- CONTENU -->
     <div class="p-6 md:p-8">
 
         <%
@@ -43,13 +52,11 @@
         <% request.getSession().removeAttribute("success"); %>
         <% } %>
 
-        <!-- ONGLETS -->
         <div class="flex border-b mb-6">
             <button type="button" onclick="showTab(0)" id="tab1" class="tab-active flex-1 py-3 text-center">Se Connecter</button>
             <button type="button" onclick="showTab(1)" id="tab2" class="flex-1 py-3 text-center text-slate-500">Activer Compte</button>
         </div>
 
-        <!-- ===================== CONNEXION ===================== -->
         <div id="loginForm">
             <form action="${pageContext.request.contextPath}/login" method="post">
                 <div class="mb-5">
@@ -67,7 +74,6 @@
             </form>
         </div>
 
-        <!-- ===================== ACTIVATION ===================== -->
         <div id="activationForm" class="hidden">
             <form id="step1Form" action="${pageContext.request.contextPath}/admin/verifier" method="post">
                 <div class="mb-5">

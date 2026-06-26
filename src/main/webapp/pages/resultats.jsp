@@ -16,10 +16,18 @@
 
 <body class="p-4 sm:p-6 md:p-10">
 
-<div class="max-w-4xl mx-auto">
+<div class="max-w-4xl mx-auto relative">
+
+    <!-- Bouton Sortie ajouté -->
+    <div class="absolute top-0 right-0">
+        <a href="${pageContext.request.contextPath}/pages/dashboard-elections"
+           class="bg-gray-200 text-gray-700 px-4 py-2 rounded-xl font-bold hover:bg-gray-300 transition text-sm">
+           ⬅ Sortie
+        </a>
+    </div>
 
     <!-- TITRE -->
-    <div class="mb-6 sm:mb-10">
+    <div class="mb-6 sm:mb-10 mt-12 sm:mt-0">
         <h1 class="text-2xl sm:text-3xl font-black text-gray-800 break-words">
             ${election.titre}
         </h1>

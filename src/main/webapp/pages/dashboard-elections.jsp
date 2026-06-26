@@ -16,8 +16,14 @@
 
 <body class="p-4 sm:p-6 md:p-10">
 
-<div class="max-w-6xl mx-auto">
-
+<div class="max-w-6xl mx-auto relative">
+    <!-- Bouton Sortie ajouté -->
+    <div class="absolute top-6 right-6">
+        <a href="${pageContext.request.contextPath}/pages/cahier.jsp"
+           class="bg-gray-200 text-gray-700 px-4 py-2 rounded-xl font-bold hover:bg-gray-300 transition text-sm">
+           ⬅ Sortie
+        </a>
+    </div>
     <h1 class="text-2xl sm:text-3xl font-black text-gray-800 mb-2 break-words">
         Tableau de bord des votes
     </h1>

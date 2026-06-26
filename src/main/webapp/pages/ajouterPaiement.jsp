@@ -21,6 +21,13 @@
 
 <body class="bg-gray-100 p-4 sm:p-6 md:p-10">
 
+<!-- TOP BUTTON -->
+<div class="flex justify-end mb-4">
+    <a href="<%= request.getContextPath() %>/redirect-to-dashboard"
+       class="px-4 sm:px-5 py-2 bg-teal-700 hover:bg-teal-800 text-white text-sm font-semibold rounded-lg shadow">
+        ← Retour au menu
+    </a>
+</div>
 <!-- TOP BAR -->
 <div class="flex justify-end mb-4">
     <a href="<%= request.getContextPath() %>/listePaiements"

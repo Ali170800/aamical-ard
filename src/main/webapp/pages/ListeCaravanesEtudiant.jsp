@@ -8,8 +8,16 @@
 </head>
 <body class="bg-slate-50 min-h-screen">
 
-<div class="max-w-5xl mx-auto p-6">
-    <h1 class="text-3xl font-bold text-slate-800 mb-8">🚌 Caravanes Disponibles</h1>
+<div class="max-w-5xl mx-auto p-6 relative">
+
+    <div class="absolute top-6 right-6">
+        <a href="${pageContext.request.contextPath}/pages/espaceEtudiant.jsp"
+           class="bg-gray-200 text-gray-700 px-4 py-2 rounded-xl font-bold hover:bg-gray-300 transition text-sm">
+           ⬅ Sortie
+        </a>
+    </div>
+
+    <h1 class="text-3xl font-bold text-slate-800 mb-8 mt-12">🚌 Caravanes Disponibles</h1>
 
     <c:if test="${not empty success}">
         <div class="bg-green-100 border border-green-400 text-green-700 px-5 py-4 rounded-2xl mb-6">${success}</div>

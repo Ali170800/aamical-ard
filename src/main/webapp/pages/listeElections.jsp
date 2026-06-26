@@ -8,7 +8,6 @@
 
     <meta charset="UTF-8">
 
-    <!-- Responsive -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <title>Élections disponibles</title>
@@ -19,7 +18,14 @@
 
 <body class="min-h-screen bg-gray-50 p-4 sm:p-6 md:p-8 lg:p-10">
 
-<div class="max-w-4xl mx-auto">
+<div class="max-w-4xl mx-auto relative">
+
+    <div class="absolute top-0 right-0">
+        <a href="${pageContext.request.contextPath}/pages/espaceEtudiant.jsp"
+           class="bg-gray-200 text-gray-700 px-4 py-2 rounded-xl font-bold hover:bg-gray-300 transition text-sm">
+           ⬅ Sortie
+        </a>
+    </div>
 
     <h1 class="text-2xl sm:text-3xl font-black mb-6 sm:mb-8">
         Élections disponibles
@@ -49,7 +55,6 @@
 
                             </div>
 
-                            <!-- Redirection corrigée vers voter.jsp -->
                             <a href="${pageContext.request.contextPath}/pages/voter.jsp?electionId=${election.id}"
                                class="w-full md:w-auto text-center bg-indigo-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-indigo-700 transition-colors duration-300">
 

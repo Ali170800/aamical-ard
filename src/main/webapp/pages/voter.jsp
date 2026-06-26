@@ -35,33 +35,39 @@
 <head>
     <title>Vote - <%= election != null ? election.getTitre() : "Chargement..." %></title>
 
-    <!-- RESPONSIVE VIEWPORT -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 
 <body class="bg-gray-50 px-4 py-6 sm:px-6 md:px-8 lg:px-10">
-    <div class="max-w-2xl mx-auto w-full">
+    <div class="max-w-2xl mx-auto w-full relative">
+
+        <div class="absolute top-0 right-0">
+            <a href="${pageContext.request.contextPath}/etudiant/elections"
+               class="bg-gray-200 text-gray-700 px-4 py-2 rounded-xl font-bold hover:bg-gray-300 transition text-sm">
+               ⬅ Sortie
+            </a>
+        </div>
 
         <% String status = request.getParameter("status");
            if("success".equals(status)) { %>
-            <div class="bg-green-100 text-green-700 p-4 rounded mb-6">
+            <div class="bg-green-100 text-green-700 p-4 rounded mb-6 mt-12">
                 ✅ Vote pris en compte !
             </div>
         <% }
            else if("deja".equals(status)) { %>
-            <div class="bg-red-100 text-red-700 p-4 rounded mb-6">
+            <div class="bg-red-100 text-red-700 p-4 rounded mb-6 mt-12">
                 ❌ Déjà voté.
             </div>
         <% }
            else if("ferme".equals(status)) { %>
-            <div class="bg-red-100 text-red-700 p-4 rounded mb-6">
+            <div class="bg-red-100 text-red-700 p-4 rounded mb-6 mt-12">
                 ❌ Le scrutin est clos.
             </div>
         <% } %>
 
-        <h1 class="text-2xl sm:text-3xl font-bold mb-4 break-words">
+        <h1 class="text-2xl sm:text-3xl font-bold mb-4 break-words mt-12">
             <%= election != null ? election.getTitre() : "Chargement..." %>
         </h1>
 
@@ -104,7 +110,6 @@
             <% } } %>
         </div>
 
-        <!-- RESULTATS -->
         <div class="bg-white p-4 sm:p-6 md:p-8 rounded-3xl shadow-sm border border-gray-200">
             <h2 class="text-lg sm:text-xl font-black mb-6">
                 Résultats en temps réel

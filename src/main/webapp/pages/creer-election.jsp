@@ -13,7 +13,15 @@
 
 <body class="p-4 sm:p-6 md:p-10">
 
-<div class="max-w-2xl mx-auto bg-white p-6 sm:p-8 rounded-3xl shadow-xl">
+<div class="max-w-2xl mx-auto bg-white p-6 sm:p-8 rounded-3xl shadow-xl relative">
+
+    <!-- Bouton Sortie ajouté -->
+    <div class="absolute top-6 right-6">
+        <a href="${pageContext.request.contextPath}/pages/cahier.jsp"
+           class="bg-gray-200 text-gray-700 px-4 py-2 rounded-xl font-bold hover:bg-gray-300 transition text-sm">
+           ⬅ Sortie
+        </a>
+    </div>
 
     <h1 class="text-xl sm:text-2xl font-black mb-6 break-words">
         Créer une nouvelle élection
