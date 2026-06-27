@@ -2,8 +2,6 @@ package com.amical.ard.servlets;
 
 import com.amical.ard.dao.UtilisateurDAO;
 import com.amical.ard.entites.Utilisateur;
-import com.amical.ard.utils.JpaUtil;
-
 import jakarta.persistence.EntityManager;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -37,11 +35,7 @@ public class LoginServlet extends HttpServlet {
                 || loginInput.trim().isEmpty()
                 || motDePasse.trim().isEmpty()) {
 
-            request.setAttribute(
-                    "erreur",
-                    "Email/Login et mot de passe obligatoires."
-            );
-
+            request.setAttribute("erreur", "Email/Login et mot de passe obligatoires.");
             doGet(request, response);
             return;
         }
@@ -49,13 +43,10 @@ public class LoginServlet extends HttpServlet {
         loginInput = loginInput.trim().toLowerCase();
         motDePasse = motDePasse.trim();
 
-        EntityManager em = null;
+        // Récupération de l'EntityManager fourni par le filtre
+        EntityManager em = (EntityManager) request.getAttribute("em");
 
         try {
-
-            em = JpaUtil.getEntityManagerFactory()
-                    .createEntityManager();
-
             UtilisateurDAO dao = new UtilisateurDAO(em);
 
             // ================= RECHERCHE UTILISATEUR =================
@@ -67,12 +58,7 @@ public class LoginServlet extends HttpServlet {
             }
 
             if (user == null) {
-
-                request.setAttribute(
-                        "erreur",
-                        "Compte introuvable."
-                );
-
+                request.setAttribute("erreur", "Compte introuvable.");
                 doGet(request, response);
                 return;
             }
@@ -82,11 +68,7 @@ public class LoginServlet extends HttpServlet {
             if (user.getMotDePasse() == null
                     || !user.getMotDePasse().trim().equals(motDePasse)) {
 
-                request.setAttribute(
-                        "erreur",
-                        "Mot de passe incorrect."
-                );
-
+                request.setAttribute("erreur", "Mot de passe incorrect.");
                 doGet(request, response);
                 return;
             }
@@ -94,12 +76,7 @@ public class LoginServlet extends HttpServlet {
             // ================= STATUT =================
 
             if (!"ACTIF".equalsIgnoreCase(user.getStatut())) {
-
-                request.setAttribute(
-                        "erreur",
-                        "Compte non activé."
-                );
-
+                request.setAttribute("erreur", "Compte non activé.");
                 doGet(request, response);
                 return;
             }
@@ -107,78 +84,27 @@ public class LoginServlet extends HttpServlet {
             // ================= SESSION =================
 
             HttpSession session = request.getSession(true);
+            session.setAttribute("utilisateurConnecte", user);
+            session.setAttribute("userType", user.getRole());
+            session.setAttribute("username", user.getPrenom() + " " + user.getNom());
 
-            session.setAttribute(
-                    "utilisateurConnecte",
-                    user
-            );
-
-            session.setAttribute(
-                    "userType",
-                    user.getRole()
-            );
-
-            session.setAttribute(
-                    "username",
-                    user.getPrenom() + " " + user.getNom()
-            );
-
-            String role = user.getRole() != null
-                    ? user.getRole().trim().toUpperCase()
-                    : "";
+            String role = user.getRole() != null ? user.getRole().trim().toUpperCase() : "";
 
             // ================= REDIRECTION =================
 
             if ("PCS".equals(role)) {
-
-                response.sendRedirect(
-                        request.getContextPath()
-                                + "/pcs-dashboard"
-                );
-            }
-
-            else if ("PCO".equals(role)) {
-
-                response.sendRedirect(
-                        request.getContextPath()
-                                + "/pco-dashboard"
-                );
-            }
-
-            else if ("ADMIN".equals(role)
-                    || "SUPER_ADMIN".equals(role)
-                    || "SUPERADMIN".equals(role)) {
-
-                response.sendRedirect(
-                        request.getContextPath()
-                                + "/pages/cahier.jsp"
-                );
-            }
-
-            else {
-
-                response.sendRedirect(
-                        request.getContextPath()
-                                + "/pages/cahier.jsp"
-                );
+                response.sendRedirect(request.getContextPath() + "/pcs-dashboard");
+            } else if ("PCO".equals(role)) {
+                response.sendRedirect(request.getContextPath() + "/pco-dashboard");
+            } else {
+                response.sendRedirect(request.getContextPath() + "/pages/cahier.jsp");
             }
 
         } catch (Exception e) {
-
             e.printStackTrace();
-
-            request.setAttribute(
-                    "erreur",
-                    "Erreur serveur."
-            );
-
+            request.setAttribute("erreur", "Erreur serveur.");
             doGet(request, response);
-
-        } finally {
-
-            if (em != null && em.isOpen()) {
-                em.close();
-            }
         }
+        // PAS DE em.close() ICI : Le filtre s'en occupe.
     }
 }

@@ -1,9 +1,11 @@
 package com.amical.ard.servlets;
 
 import com.amical.ard.dao.ElectionDAO;
-import com.amical.ard.entites.CandidatElection;
-import com.amical.ard.entites.Election;
+import com.amical.ard.dao.NotificationDAO;
+import com.amical.ard.dao.EtudiantDAO;
+import com.amical.ard.entites.*;
 import com.amical.ard.utils.CloudinaryUtil;
+import com.amical.ard.utils.EntityManagerHelper;
 import com.cloudinary.utils.ObjectUtils;
 import jakarta.persistence.EntityManager;
 import jakarta.servlet.ServletException;
@@ -30,7 +32,8 @@ public class AjouterElectionServlet extends HttpServlet {
     protected void doPost(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
 
-        // On récupère l'EntityManager préparé par le filtre
+        HttpSession session = request.getSession();
+        Utilisateur admin = (Utilisateur) session.getAttribute("utilisateurConnecte");
         EntityManager em = (EntityManager) request.getAttribute("em");
 
         try {
@@ -70,12 +73,27 @@ public class AjouterElectionServlet extends HttpServlet {
                 }
                 candidats.add(candidat);
             }
-
             election.setCandidats(candidats);
 
             // 3. Enregistrement
-            ElectionDAO dao = new ElectionDAO(em);
-            dao.ajouter(election);
+            em.persist(election);
+
+            // 4. Logique Notifications (utilisant persister() pour rester dans la transaction)
+            if (admin != null) {
+                String nomCreateur = admin.getPrenom() + " " + admin.getNom();
+                EtudiantDAO etudiantDAO = new EtudiantDAO(em);
+                NotificationDAO notifDAO = new NotificationDAO(em);
+
+                List<Etudiant> etudiants = etudiantDAO.listerTous();
+                for (Etudiant etudiant : etudiants) {
+                    Notification n = new Notification();
+                    n.setUtilisateurId(etudiant.getId());
+                    n.setMessage(nomCreateur + " a ajouté une nouvelle élection : " + election.getTitre());
+                    n.setDateCreation(LocalDateTime.now());
+                    n.setEstLu(false);
+                    notifDAO.persister(n); // Appel à la méthode sans commit interne
+                }
+            }
 
             em.getTransaction().commit();
             request.getSession().setAttribute("success", "Élection créée avec succès !");
@@ -89,6 +107,5 @@ public class AjouterElectionServlet extends HttpServlet {
             request.getSession().setAttribute("erreur", "Erreur : " + e.getMessage());
             response.sendRedirect(request.getContextPath() + "/admin/ajouter-election");
         }
-        // Pas de em.close() ici, le filtre s'en occupe !
     }
 }

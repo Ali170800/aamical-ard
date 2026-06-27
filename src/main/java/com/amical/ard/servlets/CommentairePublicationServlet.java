@@ -1,73 +1,71 @@
 package com.amical.ard.servlets;
 
 import com.amical.ard.dao.CommentairePublicationDAO;
-import com.amical.ard.entites.CommentairePublication;
-import com.amical.ard.entites.Utilisateur;
-import com.amical.ard.entites.Etudiant;
-import com.amical.ard.utils.EntityManagerHelper;
-
+import com.amical.ard.dao.NotificationDAO;
+import com.amical.ard.dao.PublicationDAO;
+import com.amical.ard.entites.*;
+import jakarta.persistence.EntityManager;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
-import jakarta.servlet.http.HttpServlet;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
-
+import jakarta.servlet.http.*;
 import java.io.IOException;
 import java.time.LocalDateTime;
 
 @WebServlet("/etudiant/commenter-publication")
 public class CommentairePublicationServlet extends HttpServlet {
-
     @Override
-    protected void doPost(HttpServletRequest request, HttpServletResponse response)
-            throws ServletException, IOException {
-
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
         HttpSession session = request.getSession(false);
-        Long utilisateurId = null;
-
-        // --- Logique d'authentification ---
         Utilisateur admin = (Utilisateur) session.getAttribute("utilisateurConnecte");
-        if (admin != null) {
-            utilisateurId = admin.getId().longValue();
-        } else {
-            Etudiant etudiant = (Etudiant) session.getAttribute("etudiantConnecte");
-            if (etudiant != null) {
-                utilisateurId = etudiant.getId();
+        Etudiant etudiant = (Etudiant) session.getAttribute("etudiantConnecte");
+
+        String nomAuteur = (admin != null) ? (admin.getPrenom() + " " + admin.getNom()) :
+                (etudiant != null) ? (etudiant.getPrenom() + " " + etudiant.getNom()) : "Utilisateur";
+
+        String texte = request.getParameter("commentaire");
+        String pubIdStr = request.getParameter("publicationId");
+
+        // Utilisation de l'EntityManager du Filtre
+        EntityManager em = (EntityManager) request.getAttribute("em");
+
+        if (texte != null && !texte.trim().isEmpty() && pubIdStr != null && em != null) {
+            Long pubId = Long.parseLong(pubIdStr);
+
+            // 1. Sauvegarde du commentaire
+            CommentairePublication com = new CommentairePublication();
+            com.setPublicationId(pubId);
+            com.setCommentaire(texte.trim());
+            com.setUtilisateurId(admin != null ? admin.getId().longValue() : etudiant.getId());
+            com.setDateCommentaire(LocalDateTime.now());
+
+            // On passe l'EM partagé
+            new CommentairePublicationDAO(em).ajouter(com);
+
+            // 2. Notification
+            PublicationDAO pubDAO = new PublicationDAO(em);
+            Publication publication = pubDAO.findById(pubId);
+
+            if (publication != null && !publication.getAuteurId().equals(admin != null ? admin.getId().longValue() : etudiant.getId())) {
+                String messageNotif = nomAuteur + " a commenté la publication de "
+                        + publication.getAuteurPrenom() + " " + publication.getAuteurNom()
+                        + " : \"" + texte + "\"";
+
+                Notification n = new Notification();
+                n.setUtilisateurId(publication.getAuteurId());
+                n.setMessage(messageNotif);
+                n.setDateCreation(LocalDateTime.now());
+                n.setEstLu(false);
+
+                // Utilisation du DAO avec l'EM du filtre
+                new NotificationDAO(em).ajouter(n);
             }
         }
 
-        if (utilisateurId == null) {
-            response.sendRedirect(request.getContextPath() + "/pages/connexionEtudiant.jsp");
-            return;
-        }
+        // Nettoyage pour JSON
+        String textePropre = texte.replace("\"", "'").replaceAll("[\\n\\r]", " ");
+        String nomPropre = nomAuteur.replace("\"", "'");
 
-        // --- Logique métier ---
-        try {
-            Long publicationId = Long.parseLong(request.getParameter("publicationId"));
-            String texte = request.getParameter("commentaire");
-
-            if (texte == null || texte.trim().isEmpty()) {
-                response.sendRedirect(request.getContextPath() + "/liste-publications");
-                return;
-            }
-
-            CommentairePublication commentaire = new CommentairePublication();
-            commentaire.setPublicationId(publicationId);
-            commentaire.setUtilisateurId(utilisateurId);
-            commentaire.setCommentaire(texte.trim());
-            commentaire.setDateCommentaire(LocalDateTime.now());
-
-            // On récupère l'EntityManager déjà actif grâce au Filtre
-            CommentairePublicationDAO dao = new CommentairePublicationDAO(EntityManagerHelper.getEntityManager());
-            dao.ajouter(commentaire);
-
-            response.sendRedirect(request.getContextPath() + "/liste-publications");
-
-        } catch (Exception e) {
-            // Si une erreur survient, le Filtre fera le rollback automatiquement
-            throw new ServletException("Erreur lors de l'ajout du commentaire", e);
-        }
-        // PAS DE finally { em.close() } ici ! Le filtre s'en occupe.
+        response.setContentType("application/json; charset=UTF-8");
+        response.getWriter().write("{\"nom\": \"" + nomPropre + "\", \"texte\": \"" + textePropre + "\"}");
     }
 }

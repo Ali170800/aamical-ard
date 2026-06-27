@@ -2,7 +2,7 @@ package com.amical.ard.servlets;
 
 import com.amical.ard.dao.*;
 import com.amical.ard.entites.*;
-import com.amical.ard.utils.EntityManagerHelper; // Votre Helper qui récupère l'EM du filtre
+import com.amical.ard.utils.EntityManagerHelper;
 import jakarta.persistence.EntityManager;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -16,13 +16,24 @@ public class ListePublicationServlet extends HttpServlet {
 
     @Override
     protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-        // Le filtre a déjà ouvert l'EntityManager et l'a lié au Thread actuel
         EntityManager em = EntityManagerHelper.getEntityManager();
 
         try {
             PublicationDAO publicationDAO = new PublicationDAO(em);
             CommentairePublicationDAO commentaireDAO = new CommentairePublicationDAO(em);
             LikePublicationDAO likeDAO = new LikePublicationDAO(em);
+
+            // --- CORRECTION SÉCURISÉE ---
+            // On compte d'abord. Si le résultat est > 0, alors on supprime.
+            // Cela évite les erreurs de calcul de date à répétition.
+            Long nombreAnciennes = publicationDAO.compterPublicationsAnciennes();
+            if (nombreAnciennes > 0) {
+                System.out.println("Date actuelle serveur: " + java.time.LocalDateTime.now());
+                System.out.println("Seuil de suppression: " + java.time.LocalDateTime.now().minusDays(14));
+                publicationDAO.supprimerPublicationsAnciennes();
+            }
+            request.setAttribute("nbAnciennesPubs", nombreAnciennes);
+            // -----------------------------------------------------------
 
             HttpSession session = request.getSession();
             Utilisateur adminConnecte = (Utilisateur) session.getAttribute("utilisateurConnecte");
@@ -32,27 +43,22 @@ public class ListePublicationServlet extends HttpServlet {
             List<Publication> publications = publicationDAO.listerToutes();
 
             for (Publication publication : publications) {
-                // Info Auteur
                 String auteurPublication = publication.getAuteurPrenom() + " " + publication.getAuteurNom();
                 request.setAttribute("auteur_publication_" + publication.getId(), auteurPublication);
                 request.setAttribute("role_auteur_" + publication.getId(), publication.getAuteurRole());
 
-                // Date de publication
                 String datePub = (publication.getDatePublication() != null) ? publication.getDatePublication().format(dtf) : "Date inconnue";
                 request.setAttribute("date_publication_" + publication.getId(), datePub);
 
-                // Permissions
                 boolean peutModifier = (adminId != null && publication.getAuteurId() != null)
                         && publication.getAuteurId().equals(adminId);
                 publication.setPeutModifier(peutModifier);
 
-                // Commentaires
                 List<CommentairePublication> commentaires = commentaireDAO.listerParPublication(publication.getId());
                 publication.setCommentaires(commentaires);
 
                 for (CommentairePublication c : commentaires) {
                     String auteurNom = "Utilisateur";
-                    // Utilisation de l'EM fourni par le filtre
                     Utilisateur u = em.find(Utilisateur.class, c.getUtilisateurId());
                     if (u != null) {
                         auteurNom = u.getPrenom() + " " + u.getNom();
@@ -62,7 +68,6 @@ public class ListePublicationServlet extends HttpServlet {
                     }
                     request.setAttribute("auteur_commentaire_" + c.getId(), auteurNom);
                 }
-
                 publication.setNombreLikes(likeDAO.nombreLikes(publication.getId()));
             }
 
@@ -72,6 +77,5 @@ public class ListePublicationServlet extends HttpServlet {
         } catch (Exception e) {
             throw new ServletException("Erreur lors de la récupération des publications", e);
         }
-        // PAS DE em.close() ici ! Le filtre s'en chargera.
     }
 }

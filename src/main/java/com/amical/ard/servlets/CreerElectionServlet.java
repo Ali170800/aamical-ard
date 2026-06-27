@@ -1,12 +1,15 @@
 package com.amical.ard.servlets;
 
 import com.amical.ard.entites.*;
+import com.amical.ard.dao.EtudiantDAO; // Import ajouté
+import com.amical.ard.dao.NotificationDAO; // Import ajouté
 import jakarta.persistence.EntityManager;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
 import jakarta.servlet.http.*;
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @WebServlet("/admin/creer-election")
 public class CreerElectionServlet extends HttpServlet {
@@ -48,6 +51,29 @@ public class CreerElectionServlet extends HttpServlet {
             }
 
             em.getTransaction().commit();
+
+            // --- DEBUT DE LA LOGIQUE DE NOTIFICATION ---
+            try {
+                EtudiantDAO etudiantDAO = new EtudiantDAO(em);
+                NotificationDAO notifDAO = new NotificationDAO(em);
+                List<Etudiant> tousLesEtudiants = etudiantDAO.listerTous();
+
+                String messageNotif = "Une nouvelle élection est ouverte : " + titre;
+
+                for (Etudiant etudiant : tousLesEtudiants) {
+                    Notification n = new Notification();
+                    n.setUtilisateurId(etudiant.getId());
+                    n.setMessage(messageNotif);
+                    n.setDateCreation(LocalDateTime.now());
+                    n.setEstLu(false);
+                    notifDAO.ajouter(n);
+                }
+            } catch (Exception notifEx) {
+                // On ne bloque pas la redirection si la notification échoue
+                notifEx.printStackTrace();
+            }
+            // --- FIN DE LA LOGIQUE DE NOTIFICATION ---
+
             response.sendRedirect(request.getContextPath() + "/pages/dashboard-elections");
 
         } catch (Exception e) {
@@ -57,6 +83,5 @@ public class CreerElectionServlet extends HttpServlet {
             e.printStackTrace();
             response.sendRedirect(request.getContextPath() + "/pages/creer-election?error=1");
         }
-        // Plus besoin de em.close() ici, le filtre s'en chargera automatiquement.
     }
 }
