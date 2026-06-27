@@ -4,7 +4,6 @@ import com.amical.ard.dao.EtudiantDAO;
 import com.amical.ard.dao.PaiementLogementDAO;
 import com.amical.ard.entites.Etudiant;
 import com.amical.ard.entites.PaiementLogement;
-import com.amical.ard.utils.JpaUtil;
 
 import jakarta.persistence.EntityManager;
 import jakarta.servlet.ServletException;
@@ -26,7 +25,6 @@ public class EspaceEtudiantServlet extends HttpServlet {
 
         HttpSession session = request.getSession(false);
 
-        // Récupération sécurisée de l'étudiant connecté
         Etudiant etudiant = null;
         if (session != null) {
             etudiant = (Etudiant) session.getAttribute("etudiantConnecte");
@@ -40,15 +38,15 @@ public class EspaceEtudiantServlet extends HttpServlet {
             return;
         }
 
-        EntityManager em = null;
+        // Utilisation de l'EntityManager fourni par le filtre (AuthentificationFilter)
+        EntityManager em = (EntityManager) request.getAttribute("em");
+
         try {
-            em = JpaUtil.getEntityManagerFactory().createEntityManager();
             EtudiantDAO etudiantDAO = new EtudiantDAO(em);
             PaiementLogementDAO paiementDAO = new PaiementLogementDAO(em);
 
             // Recharger l'étudiant complet
             Etudiant etudiantComplet = etudiantDAO.trouverParId(etudiant.getId());
-
             List<PaiementLogement> mesPaiements = paiementDAO.findByEtudiantId(etudiant.getId());
 
             request.setAttribute("etudiant", etudiantComplet);
@@ -59,11 +57,8 @@ public class EspaceEtudiantServlet extends HttpServlet {
         } catch (Exception e) {
             e.printStackTrace();
             request.setAttribute("erreur", "Erreur de chargement des données.");
-        } finally {
-            if (em != null && em.isOpen()) {
-                em.close();
-            }
         }
+        // PAS DE 'finally' ICI : c'est le Filtre qui se charge de fermer la connexion.
 
         request.getRequestDispatcher("/pages/espaceEtudiant.jsp").forward(request, response);
     }
