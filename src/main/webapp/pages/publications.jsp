@@ -58,7 +58,14 @@
             String datePub = (String) request.getAttribute("date_publication_" + p.getId());
         %>
         <div class="bg-white rounded-3xl shadow-lg mb-8 sm:mb-10 overflow-hidden">
-            <img src="<%= p.getImage() %>" class="w-full h-auto object-contain bg-gray-50" alt="Image">
+            <% if ("VIDEO".equals(p.getTypeMedia())) { %>
+                <video controls class="w-full h-auto bg-black">
+                    <source src="<%= p.getVideo() %>" type="video/mp4">
+                </video>
+            <% } else { %>
+                <img src="<%= p.getImage() %>" class="w-full h-auto object-contain bg-gray-50" alt="Publication">
+            <% } %>
+
             <div class="p-4 sm:p-6">
                 <div class="flex justify-between items-start mb-4">
                     <div>
@@ -78,10 +85,8 @@
 
                 <div class="flex gap-6 border-t pt-4">
                     <button onclick="liker('<%= p.getId() %>')" class="font-bold text-red-500"><i class="fas fa-heart"></i> J’aime (<span id="like-count-<%= p.getId() %>"><%= p.getNombreLikes() %></span>)</button>
-                    <button onclick="document.getElementById('com-<%= p.getId() %>').classList.toggle('hidden')"
-                            class="text-blue-600 font-bold">
-                        <i class="fas fa-comments"></i>
-                        Commentaires (<span id="comment-count-<%= p.getId() %>"><%= (p.getCommentaires() != null) ? p.getCommentaires().size() : 0 %></span>)
+                    <button onclick="document.getElementById('com-<%= p.getId() %>').classList.toggle('hidden')" class="text-blue-600 font-bold">
+                        <i class="fas fa-comments"></i> Commentaires (<span id="comment-count-<%= p.getId() %>"><%= (p.getCommentaires() != null) ? p.getCommentaires().size() : 0 %></span>)
                     </button>
                 </div>
 
@@ -91,7 +96,6 @@
                         <textarea name="commentaire" required placeholder="Écrire un commentaire..." class="w-full p-3 border rounded-xl" rows="2"></textarea>
                         <button type="button" onclick="publierCommentaire('<%= p.getId() %>')" class="mt-2 bg-blue-600 text-white px-4 py-2 rounded-lg text-sm">Publier</button>
                     </form>
-
                     <div id="liste-com-<%= p.getId() %>" class="space-y-3 max-h-60 overflow-y-auto">
                         <% if (p.getCommentaires() != null) {
                             for (CommentairePublication c : p.getCommentaires()) { %>
@@ -110,55 +114,54 @@
 </div>
 
 <script>
-async function liker(id) {
-    const res = await fetch('<%= request.getContextPath() %>/like-publication', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        body: 'publicationId=' + id
-    });
-    if (res.ok) {
-        const d = await res.json();
-        document.getElementById('like-count-' + id).innerText = d.nouveauTotal;
-    }
-}
-
-async function publierCommentaire(id) {
-    const form = document.getElementById('form-' + id);
-    const textarea = form.querySelector('textarea');
-    const texte = textarea.value.trim();
-    if (!texte) return;
-
-    const res = await fetch('<%= request.getContextPath() %>/etudiant/commenter-publication', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/x-www-form-urlencoded'},
-        body: new URLSearchParams(new FormData(form))
-    });
-
-    if (res.ok) {
-        const data = await res.json();
-        const now = new Date();
-        const dateStr = String(now.getDate()).padStart(2, '0') + '/' +
-                        String(now.getMonth() + 1).padStart(2, '0') + '/' +
-                        now.getFullYear() + ' ' +
-                        String(now.getHours()).padStart(2, '0') + ':' +
-                        String(now.getMinutes()).padStart(2, '0');
-
-        const liste = document.getElementById('liste-com-' + id);
-        const div = document.createElement('div');
-        div.className = "border-b pb-2 animate-fade-in";
-        div.innerHTML = '<p class="font-bold text-sm text-blue-800">' + (data.nom || 'Utilisateur') + '</p>' +
-                        '<p class="text-gray-700 text-sm break-words">' + (data.texte || '') + '</p>' +
-                        '<p class="text-[10px] text-gray-400">' + dateStr + '</p>';
-        liste.prepend(div);
-        const compteur = document.getElementById('comment-count-' + id);
-        if (compteur) {
-            compteur.textContent = parseInt(compteur.textContent) + 1;
+    // ... tes fonctions liker et publierCommentaire sont restées les mêmes ...
+    async function liker(id) {
+        const res = await fetch('<%= request.getContextPath() %>/like-publication', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+            body: 'publicationId=' + id
+        });
+        if (res.ok) {
+            const d = await res.json();
+            document.getElementById('like-count-' + id).innerText = d.nouveauTotal;
         }
-        textarea.value = '';
-    } else {
-        alert("Erreur lors de la publication.");
     }
-}
+
+    async function publierCommentaire(id) {
+        const form = document.getElementById('form-' + id);
+        const textarea = form.querySelector('textarea');
+        const texte = textarea.value.trim();
+        if (!texte) return;
+
+        const res = await fetch('<%= request.getContextPath() %>/etudiant/commenter-publication', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+            body: new URLSearchParams(new FormData(form))
+        });
+
+        if (res.ok) {
+            const data = await res.json();
+            const now = new Date();
+            const dateStr = String(now.getDate()).padStart(2, '0') + '/' +
+                            String(now.getMonth() + 1).padStart(2, '0') + '/' +
+                            now.getFullYear() + ' ' +
+                            String(now.getHours()).padStart(2, '0') + ':' +
+                            String(now.getMinutes()).padStart(2, '0');
+
+            const liste = document.getElementById('liste-com-' + id);
+            const div = document.createElement('div');
+            div.className = "border-b pb-2 animate-fade-in";
+            div.innerHTML = '<p class="font-bold text-sm text-blue-800">' + (data.nom || 'Utilisateur') + '</p>' +
+                            '<p class="text-gray-700 text-sm break-words">' + (data.texte || '') + '</p>' +
+                            '<p class="text-[10px] text-gray-400">' + dateStr + '</p>';
+            liste.prepend(div);
+            const compteur = document.getElementById('comment-count-' + id);
+            if (compteur) { compteur.textContent = parseInt(compteur.textContent) + 1; }
+            textarea.value = '';
+        } else {
+            alert("Erreur lors de la publication.");
+        }
+    }
 </script>
 </body>
 </html>

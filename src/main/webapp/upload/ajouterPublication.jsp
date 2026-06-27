@@ -13,7 +13,6 @@
 
 <body class="bg-gray-100 p-4 sm:p-6 md:p-10">
 
-<!-- TOP BUTTON -->
 <div class="flex justify-end mb-4">
     <a href="<%= request.getContextPath() %>/redirect-to-dashboard"
        class="px-4 sm:px-5 py-2 bg-teal-700 hover:bg-teal-800 text-white text-sm font-semibold rounded-lg shadow">
@@ -30,7 +29,6 @@
           action="${pageContext.request.contextPath}/admin/ajouter-publication"
           enctype="multipart/form-data">
 
-        <!-- DESCRIPTION -->
         <div class="mb-4">
 
             <label class="block font-semibold mb-2">
@@ -45,22 +43,20 @@
 
         </div>
 
-        <!-- IMAGE -->
         <div class="mb-6">
 
             <label class="block font-semibold mb-2">
-                Choisir une image
+                Choisir une image ou une vidéo (max 10 min)
             </label>
 
             <input type="file"
-                   name="image"
-                   accept=".jpg,.jpeg,.png"
+                   name="fichierMedia"
+                   accept=".jpg,.jpeg,.png,.mp4,.webm,.mov"
                    required
                    class="w-full border rounded-xl p-3 text-sm sm:text-base bg-white">
 
         </div>
 
-        <!-- BUTTON -->
         <button
                 class="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-bold transition">
 

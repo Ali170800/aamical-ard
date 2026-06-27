@@ -23,9 +23,9 @@ import java.util.Map;
 
 @WebServlet("/admin/ajouter-publication")
 @MultipartConfig(
-        fileSizeThreshold = 1024 * 1024 * 1,
-        maxFileSize = 1024 * 1024 * 10,
-        maxRequestSize = 1024 * 1024 * 15
+        fileSizeThreshold = 1024 * 1024 * 2,  // 2 Mo
+        maxFileSize = 1024 * 1024 * 200,      // 200 Mo max
+        maxRequestSize = 1024 * 1024 * 250    // 250 Mo max
 )
 public class AjouterPublicationServlet extends HttpServlet {
 
@@ -42,47 +42,51 @@ public class AjouterPublicationServlet extends HttpServlet {
         }
 
         try {
-            // AJOUT DE L'EntityManager pour qu'il soit reconnu partout dans la méthode
             EntityManager em = EntityManagerHelper.getEntityManager();
 
-            // Infos auteur
-            Integer auteurId = admin.getId();
-            String nom = admin.getNom();
-            String prenom = admin.getPrenom();
-            String role = admin.getRole();
+            // 1. Récupération du fichier
+            Part mediaPart = request.getPart("fichierMedia");
+            String contentType = mediaPart.getContentType();
+            String resourceType = contentType.startsWith("video") ? "video" : "image";
 
-            // 1. Récupération du Part
-            Part imagePart = request.getPart("image");
-
-            // 2. Conversion du flux en tableau d'octets
-            byte[] fileContent = imagePart.getInputStream().readAllBytes();
+            // 2. Conversion du flux
+            byte[] fileContent = mediaPart.getInputStream().readAllBytes();
 
             // 3. Envoi vers Cloudinary
             Map uploadResult = CloudinaryUtil.getCloudinary().uploader().upload(
                     fileContent,
                     ObjectUtils.asMap(
-                            "resource_type", "image",
+                            "resource_type", resourceType,
                             "folder", "publications"
                     )
             );
 
-            String imageUrl = (String) uploadResult.get("secure_url");
+            String mediaUrl = (String) uploadResult.get("secure_url");
 
-            // 4. Création et sauvegarde de la Publication
+            // 4. Création et sauvegarde
             Publication publication = new Publication();
             publication.setDescription(request.getParameter("description"));
-            publication.setImage(imageUrl);
-            publication.setAuteurId(auteurId != null ? auteurId.longValue() : 0L);
+            publication.setTypeMedia(resourceType.toUpperCase());
+
+            if (resourceType.equals("video")) {
+                publication.setVideo(mediaUrl);
+                publication.setImage(""); // Correction : forcer chaîne vide pour éviter le NULL
+            } else {
+                publication.setImage(mediaUrl);
+                publication.setVideo(""); // Correction : forcer chaîne vide pour éviter le NULL
+            }
+
+            publication.setAuteurId(admin.getId() != null ? admin.getId().longValue() : 0L);
             publication.setAuteurType("ADMIN");
-            publication.setAuteurNom(nom);
-            publication.setAuteurPrenom(prenom);
-            publication.setAuteurRole(role);
+            publication.setAuteurNom(admin.getNom());
+            publication.setAuteurPrenom(admin.getPrenom());
+            publication.setAuteurRole(admin.getRole());
             publication.setDatePublication(LocalDateTime.now());
 
             PublicationDAO dao = new PublicationDAO(em);
             dao.ajouter(publication);
 
-            // 5. Création des notifications pour tous les étudiants
+            // 5. Notifications
             String nomAuteur = admin.getPrenom() + " " + admin.getNom();
             EtudiantDAO etudiantDAO = new EtudiantDAO(em);
             NotificationDAO notifDAO = new NotificationDAO(em);
