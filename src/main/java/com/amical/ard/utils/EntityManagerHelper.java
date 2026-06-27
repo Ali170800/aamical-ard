@@ -10,22 +10,72 @@ public class EntityManagerHelper {
 
     private static final Logger logger = Logger.getLogger(EntityManagerHelper.class.getName());
     private static final String PERSISTENCE_UNIT = "amicalePU";
-    private static final EntityManagerFactory emf;
+    private static volatile EntityManagerFactory emf;
+    private static final ThreadLocal<EntityManager> threadLocal = new ThreadLocal<>();
 
-    // Initialisation unique et thread-safe au démarrage
-    static {
-        try {
-            logger.info("🔄 Initialisation de l'EntityManagerFactory...");
-            emf = Persistence.createEntityManagerFactory(PERSISTENCE_UNIT);
-        } catch (Exception e) {
-            logger.log(Level.SEVERE, "⛔ Échec de création de l'EntityManagerFactory", e);
-            throw new RuntimeException("Erreur critique JPA: vérifiez persistence.xml", e);
+    // Initialisation sécurisée (Lazy Loading)
+    private static EntityManagerFactory getEmf() {
+        if (emf == null || !emf.isOpen()) {
+            synchronized (EntityManagerHelper.class) {
+                if (emf == null || !emf.isOpen()) {
+                    try {
+                        logger.info("🔄 Initialisation de l'EntityManagerFactory...");
+                        emf = Persistence.createEntityManagerFactory(PERSISTENCE_UNIT);
+                    } catch (Exception e) {
+                        logger.log(Level.SEVERE, "⛔ Échec de création de l'EntityManagerFactory", e);
+                        throw new RuntimeException("Erreur critique JPA: vérifiez persistence.xml", e);
+                    }
+                }
+            }
+        }
+        return emf;
+    }
+
+    public static EntityManager getEntityManager() {
+        EntityManager em = threadLocal.get();
+        if (em == null || !em.isOpen()) {
+            em = getEmf().createEntityManager();
+            threadLocal.set(em);
+            logger.fine("📘 Nouvel EntityManager créé");
+        }
+        return em;
+    }
+
+    public static void closeEntityManager() {
+        EntityManager em = threadLocal.get();
+        if (em != null) {
+            try {
+                if (em.isOpen()) {
+                    if (em.getTransaction().isActive()) {
+                        em.getTransaction().rollback();
+                    }
+                    em.close();
+                }
+            } finally {
+                threadLocal.remove();
+            }
         }
     }
 
-    // Fournit une nouvelle instance à chaque appel (le filtre gérera la fermeture)
-    public static EntityManager getEntityManager() {
-        return emf.createEntityManager();
+    public static void beginTransaction() {
+        EntityManager em = getEntityManager();
+        if (!em.getTransaction().isActive()) {
+            em.getTransaction().begin();
+        }
+    }
+
+    public static void commit() {
+        EntityManager em = getEntityManager();
+        if (em.getTransaction().isActive()) {
+            em.getTransaction().commit();
+        }
+    }
+
+    public static void rollback() {
+        EntityManager em = getEntityManager();
+        if (em.getTransaction().isActive()) {
+            em.getTransaction().rollback();
+        }
     }
 
     public static void closeEntityManagerFactory() {
