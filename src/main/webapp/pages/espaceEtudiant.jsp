@@ -38,6 +38,14 @@
             });
         }
         setInterval(chargerNotifications, 5000);
+
+        window.onclick = function(event) {
+            var menu = document.getElementById("menu-notifications");
+            var button = document.querySelector('[onclick="toggleNotifications()"]');
+            if (event.target !== menu && event.target !== button && !button.contains(event.target)) {
+                menu.style.display = "none";
+            }
+        }
     </script>
 </head>
 
@@ -58,14 +66,20 @@
     </div>
 
     <div class="flex items-center gap-4 w-full md:w-auto">
-        <div class="relative">
-            <button onclick="toggleNotifications()" class="text-white hover:text-indigo-200 text-xl relative">
+        <div class="relative flex items-center">
+            <button onclick="toggleNotifications()" class="text-white hover:text-indigo-200 text-xl p-2 relative">
                 <i class="fas fa-bell"></i>
-                <span id="badge-notification" style="display:none" class="absolute -top-2 -right-2 bg-red-500 text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold">0</span>
+                <span id="badge-notification" style="display:none" class="absolute top-0 right-0 bg-red-500 text-[10px] w-5 h-5 rounded-full flex items-center justify-center font-bold border-2 border-indigo-600">0</span>
             </button>
-            <div id="menu-notifications" style="display:none" class="absolute right-0 mt-4 w-64 bg-white rounded-2xl shadow-xl border border-slate-100 z-50 overflow-hidden text-slate-800">
-                <div class="bg-slate-100 p-3 font-bold text-slate-700 text-sm">Notifications</div>
-                <ul id="liste-notifications"></ul>
+
+            <div id="menu-notifications"
+                 style="display:none"
+                 class="absolute top-12 right-0 w-[90vw] sm:w-80 bg-white rounded-2xl shadow-2xl border border-slate-100 z-[100] overflow-hidden text-slate-800">
+                <div class="bg-slate-100 p-4 font-bold text-slate-700 text-sm flex justify-between">
+                    <span>Notifications</span>
+                    <button onclick="toggleNotifications()" class="text-slate-400 hover:text-slate-600"><i class="fas fa-times"></i></button>
+                </div>
+                <ul id="liste-notifications" class="max-h-80 overflow-y-auto"></ul>
             </div>
         </div>
 

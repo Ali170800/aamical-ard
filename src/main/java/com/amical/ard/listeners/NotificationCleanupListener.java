@@ -16,18 +16,27 @@ public class NotificationCleanupListener implements ServletContextListener {
 
     @Override
     public void contextInitialized(ServletContextEvent sce) {
+        // Initialisation du scheduler pour nettoyer les notifications en arrière-plan
         scheduler = Executors.newSingleThreadScheduledExecutor();
+
         scheduler.scheduleAtFixedRate(() -> {
+            // On ouvre une instance locale pour ce thread de nettoyage
             EntityManager em = null;
             try {
-                // Ouverture de la connexion
+                // Utilisation de la méthode corrigée dans EntityManagerHelper
                 em = EntityManagerHelper.getEntityManager();
+
                 NotificationDAO dao = new NotificationDAO(em);
                 dao.supprimerVieillesNotifications();
+
             } catch (Exception e) {
+                // On logue l'erreur sans arrêter le scheduler
+                System.err.println("❌ Erreur dans NotificationCleanupListener : " + e.getMessage());
                 e.printStackTrace();
             } finally {
-                // FERMETURE OBLIGATOIRE : libère la connexion pour le pool
+                // FERMETURE OBLIGATOIRE :
+                // Ici, on ferme la connexion manuellement car aucun Filtre n'est présent
+                // pour le faire à notre place dans ce thread de fond.
                 if (em != null && em.isOpen()) {
                     em.close();
                 }
@@ -37,6 +46,7 @@ public class NotificationCleanupListener implements ServletContextListener {
 
     @Override
     public void contextDestroyed(ServletContextEvent sce) {
+        // Arrêt propre du scheduler lors de l'arrêt du serveur
         if (scheduler != null) {
             scheduler.shutdownNow();
         }

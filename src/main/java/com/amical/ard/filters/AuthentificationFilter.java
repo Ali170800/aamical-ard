@@ -19,6 +19,7 @@ public class AuthentificationFilter implements Filter {
         HttpServletRequest request = (HttpServletRequest) req;
         HttpServletResponse response = (HttpServletResponse) res;
 
+        // Ouverture de la connexion au début de la requête
         EntityManager em = EntityManagerHelper.getEntityManager();
         request.setAttribute("em", em);
 
@@ -41,7 +42,7 @@ public class AuthentificationFilter implements Filter {
                 if (uri.contains("etudiant")) {
                     response.sendRedirect(contextPath + "/pages/connexionEtudiant.jsp");
                 } else {
-                    response.sendRedirect(contextPath + "/accueil.jsp"); // Corrigé ici
+                    response.sendRedirect(contextPath + "/accueil.jsp");
                 }
                 return;
             }
@@ -57,6 +58,8 @@ public class AuthentificationFilter implements Filter {
             chain.doFilter(request, response);
 
         } finally {
+            // Fermeture obligatoire pour libérer la connexion vers MySQL
+            // Ceci empêche l'erreur 'max_user_connections'
             if (em != null && em.isOpen()) {
                 em.close();
             }
@@ -67,12 +70,11 @@ public class AuthentificationFilter implements Filter {
         uri = uri.toLowerCase();
         String cp = contextPath.toLowerCase();
 
-        // Ajout indispensable pour le fonctionnement de la PWA
         if (uri.endsWith("/manifest.json") || uri.endsWith("/sw.js")) {
             return true;
         }
 
-        return uri.endsWith("/accueil.jsp") // Corrigé ici
+        return uri.endsWith("/accueil.jsp")
                 || uri.equals(cp + "/")
                 || uri.endsWith("/login")
                 || uri.endsWith("/login.jsp")
